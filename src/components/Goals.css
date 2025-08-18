@@ -1,0 +1,83 @@
+/* Goals Component Styles */
+
+.goals-summary {
+  margin-bottom: 1.5rem;
+}
+
+.goal-category {
+  margin-bottom: 1.5rem;
+}
+
+.goal-category h4 {
+  margin-bottom: 0.75rem;
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.goal-item:hover {
+  background: var(--gray-100);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.goal-item.completed {
+  opacity: 0.7;
+  text-decoration: line-through;
+  background: var(--success);
+  color: white;
+}
+
+.goal-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.goal-item.completed .goal-checkbox {
+  background: white;
+  border-color: white;
+  color: var(--success);
+}
+
+.goal-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.add-goal-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.add-goal-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}

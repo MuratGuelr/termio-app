@@ -1,12 +1,35 @@
-# React + Vite
+# Termio - Günlük Gelişim Uygulaması
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern ve kullanıcı dostu bir kişisel gelişim ve verimlilik uygulaması.
 
-Currently, two official plugins are available:
+## Özellikler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Görev Yönetimi**: Günlük görevlerinizi organize edin
+- **Alışkanlık Takibi**: Pozitif alışkanlıklar geliştirin ve takip edin
+- **Hedef Belirleme**: Kısa ve uzun vadeli hedeflerinizi belirleyin
+- **Pomodoro Timer**: Odaklanma ve verimlilik için 25 dakikalık çalışma seansları
+- **Gamification**: XP, seviye ve başarı sistemi ile motivasyonunuzu artırın
+- **Analytics**: Haftalık ve aylık verimlilik raporları
+- **Dark/Light Tema**: Göz yorgunluğunu azaltan tema seçenekleri
 
-## Expanding the ESLint configuration
+## Teknolojiler
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React 19
+- Vite
+- Firebase (Authentication & Firestore)
+- Chart.js (Analytics)
+- FontAwesome Icons
+- Modern CSS Grid & Flexbox
+
+## Kurulum
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```

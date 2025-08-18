@@ -1,0 +1,191 @@
+/* Daily Tasks Component Styles */
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.add-btn:hover {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+/* Task List Styles */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.task-item:hover {
+  background: var(--gray-100);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.task-item.completed {
+  opacity: 0.7;
+  background: var(--success);
+  color: white;
+}
+
+.task-item.editing {
+  cursor: default;
+}
+
+.task-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.move-btn {
+  background: var(--gray-300);
+  border: none;
+  padding: 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+}
+
+.move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.task-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.task-item.completed .task-checkbox {
+  background: white;
+  border-color: white;
+  color: var(--success);
+}
+
+.task-time {
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 60px;
+  font-family: 'Courier New', monospace;
+}
+
+.task-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.time-input {
+  min-width: 80px;
+  font-family: 'Courier New', monospace;
+}
+
+.task-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.focus-btn {
+  background: var(--warning);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.focus-btn:hover {
+  background: var(--warning);
+  transform: scale(1.05);
+}
+
+.delete-btn {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Inline Edit Styles */
+.inline-edit {
+  background: transparent;
+  border: 1px dashed var(--gray-400);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  transition: var(--transition);
+}
+
+.inline-edit:focus {
+  outline: none;
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--white);
+}
+
+.inline-edit:hover {
+  border-color: var(--primary);
+}

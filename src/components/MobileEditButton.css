@@ -1,0 +1,31 @@
+.mobile-edit-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 88px; /* above the mobile nav */
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-weight: 700;
+  box-shadow: var(--shadow-xl);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mobile-edit-btn .label { font-size: 14px; }
+
+.mobile-edit-btn i { font-size: 16px; }
+
+.mobile-edit-btn:hover { filter: brightness(0.95); }
+
+.mobile-edit-btn.active { background: var(--danger); }
+
+/* show only on small screens */
+@media (min-width: 768px) {
+  .mobile-edit-btn { display: none; }
+}
