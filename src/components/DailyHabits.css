@@ -27,7 +27,6 @@
 }
 
 .habit-item.completed {
-  background: var(--success);
   color: white;
   border-color: var(--success);
 }
