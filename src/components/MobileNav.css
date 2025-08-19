@@ -28,15 +28,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
+  justify-content: center;
+  padding: 0.75rem;
   border-radius: 12px;
   cursor: pointer;
   /* Smooth navigation transitions */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--gray-600);
   text-decoration: none;
-  min-width: 60px;
+  min-width: 50px;
+  height: 50px;
   position: relative;
   overflow: hidden;
 }
@@ -72,23 +73,12 @@
 }
 
 .mobile-nav-item i {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .mobile-nav-item:hover i,
 .mobile-nav-item.active i {
-  transform: scale(1.1);
-}
-
-.mobile-nav-item span {
-  font-size: 0.7rem;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.mobile-nav-item:hover span,
-.mobile-nav-item.active span {
-  font-weight: 700;
-  transform: translateY(-1px);
+  transform: scale(1.2);
 }
 
 /* Show mobile nav on small screens */
