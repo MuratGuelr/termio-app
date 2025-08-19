@@ -170,3 +170,4 @@ export default function GoalModal({ open, onClose }) {
     </div>
   );
 }
+  

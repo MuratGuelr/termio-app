@@ -14,6 +14,7 @@ import FocusMode from './components/FocusMode';
 import CelebrationOverlay from './components/CelebrationOverlay';
 import Onboarding from './components/Onboarding';
 import OnboardingMobile from './components/OnboardingMobile';
+import EnhancedPomodoroTimer from './components/EnhancedPomodoroTimer';
 import './styles/variables.css';
 import './styles/base.css';
 
@@ -156,6 +157,7 @@ function App() {
         onExit={exitFocusMode}
       />
       <CelebrationOverlay show={showCelebration} />
+      <EnhancedPomodoroTimer />
       {!tutorialCompleted && (
         // TEMP: force mobile tutorial for all screen sizes to validate phone flow
         <OnboardingMobile onComplete={() => setTutorialCompleted(true)} />
