@@ -1,0 +1,109 @@
+.onboarding-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 22000; /* above FocusMode */
+  pointer-events: none; /* let taps through except sheet/card */
+  animation: overlayFade .18s ease-out;
+}
+
+.onboarding-mobile-card {
+  width: min(520px, 92vw);
+  background: var(--card-bg, #111);
+  color: var(--text, #fff);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  padding: 20px;
+  margin: 10vh auto 0;
+  pointer-events: auto;
+  animation: popIn .22s ease-out;
+}
+
+.onboarding-mobile-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--card-bg, #111);
+  color: var(--text, #fff);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.35);
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  pointer-events: auto;
+  z-index: 22001; /* above mobile nav */
+  animation: sheetUp .22s ease-out;
+}
+
+/* Top-positioned variant when the target is near the bottom (e.g., bottom nav)
+   Avoids covering the highlighted element */
+.onboarding-mobile-sheet.top {
+  bottom: auto;
+  top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 16px;
+  animation: sheetDown .22s ease-out;
+}
+
+.onboarding-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.onboarding-step { font-size: 12px; opacity: .85; }
+.hint-title { font-size: 16px; margin: 0 0 6px; animation: fadeInUp .22s ease-out; }
+.hint-text { font-size: 14px; margin: 0 0 10px; opacity: .9; animation: fadeIn .24s .05s ease-out both; }
+.onboarding-actions, .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.btn { border: 0; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+.btn-primary { background: var(--accent, #7367f0); color: #fff; }
+.btn-secondary { background: rgba(255,255,255,0.08); color: var(--text,#fff); }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes fadeIn { from { opacity: 0;} to { opacity: 1;} }
+@keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(.98);} to { opacity: 1; transform: translateY(0) scale(1);} }
+@keyframes overlayFade { from { opacity: 0;} to { opacity: 1;} }
+@keyframes sheetUp { from { transform: translateY(12px); opacity: 0;} to { transform: translateY(0); opacity: 1;} }
+@keyframes sheetDown { from { transform: translateY(-12px); opacity: 0;} to { transform: translateY(0); opacity: 1;} }
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-mobile-overlay,
+  .onboarding-mobile-card,
+  .hint-title,
+  .hint-text {
+    animation: none !important;
+  }
+}
+
+/* Phones: polish the onboarding card visuals */
+@media (max-width: 600px) {
+  .onboarding-mobile-card {
+    width: 94vw;
+    margin: 6vh auto 0;
+    padding: 18px 16px 16px;
+    border-radius: 18px;
+    /* subtle glass effect */
+    background: color-mix(in srgb, rgba(17,17,17,0.9) 90%, transparent);
+    backdrop-filter: saturate(120%) blur(10px);
+    border: 1px solid color-mix(in srgb, #ffffff 10%, transparent);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+  }
+
+  .onboarding-header { margin-bottom: 8px; }
+  .onboarding-step { font-size: 12px; opacity: .9; }
+  .hint-title { font-size: 17px; }
+  .hint-text { font-size: 14px; opacity: .95; }
+
+  /* Full-width primary action under secondary for thumb reachability */
+  .onboarding-actions { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 8px; 
+    margin-top: 12px;
+  }
+  .onboarding-actions .btn { width: 100%; padding: 12px 14px; border-radius: 12px; }
+  .onboarding-actions .btn-primary { box-shadow: 0 8px 18px rgba(115,103,240,0.35); }
+}

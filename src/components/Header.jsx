@@ -1,14 +1,14 @@
 import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
-export default function Header({ onToggleTheme, onOpenHistory, isEditing, onToggleEdit }) {
+export default function Header({ onToggleTheme, onOpenHistory, isEditing, onToggleEdit, onOpenSettings }) {
   const { user, logout } = useAuth();
 
   return (
     <header className="header">
       <div className="header-content">
         <div className="header-left">
-          <h1>🎯 Günlük Gelişim</h1>
+          <h1>🎯 Termio</h1>
         </div>
         <div className="header-center">
           <button 
@@ -30,7 +30,7 @@ export default function Header({ onToggleTheme, onOpenHistory, isEditing, onTogg
           <button className="theme-toggle" title="Veriyi Dışa Aktar (JSON)">
             <i className="fas fa-file-export"></i>
           </button>
-          <div className="user-info" id="userInfo">
+          <div className="user-info" id="userInfo" role="button" tabIndex={0} onClick={onOpenSettings} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenSettings?.()} title="Ayarlar">
             <div className="user-avatar" id="userAvatar">
               {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
             </div>

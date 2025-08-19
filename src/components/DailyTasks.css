@@ -189,3 +189,115 @@
 .inline-edit:hover {
   border-color: var(--primary);
 }
+
+/* Mobile-only: stack each task item vertically (column) */
+@media (max-width: 600px) {
+  #tasksSection .task-item { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 0.6rem; 
+    position: relative;
+    border-radius: 16px;
+    padding: 1.1rem 1rem 1rem;
+    /* Clean mobile glassmorphism */
+    background: color-mix(in srgb, var(--white) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--white) 35%, transparent);
+    backdrop-filter: blur(20px) saturate(140%);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.3);
+    overflow: hidden;
+  }
+  /* No pseudo elements in light mode */
+  #tasksSection .task-item::before,
+  #tasksSection .task-item::after { content: none; }
+
+  /* Slightly clearer text hierarchy on phones */
+  /* Time becomes a pill badge at top-right (replaces icon area) */
+  #tasksSection .task-time { 
+    position: absolute; 
+    top: 10px; 
+    right: 12px; 
+    min-width: 70px; 
+    font-weight: 800; 
+    font-size: 0.85rem;
+    /* Enhanced visibility for light mode */
+    color: #1a1a1a;
+    background: color-mix(in srgb, var(--primary, #4f46e5) 35%, rgba(255,255,255,0.95));
+    border: 1px solid color-mix(in srgb, var(--primary, #4f46e5) 60%, rgba(255,255,255,0.8));
+    padding: 8px 12px; 
+    border-radius: 999px; 
+    font-family: 'Courier New', monospace;
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+    text-align: center;
+    z-index: 2;
+  }
+  /* Make room for the badge */
+  #tasksSection .task-item { padding-top: 2.25rem; }
+
+  #tasksSection .task-text { line-height: 1.25; }
+
+  /* Ensure inputs stretch nicely when editing - keep same positioning */
+  #tasksSection .task-input { width: 100%; }
+  #tasksSection .time-input { 
+    position: absolute; 
+    top: 10px; 
+    right: 12px; 
+    width: auto; 
+    max-width: 120px; 
+    min-width: 70px;
+    font-weight: 800; 
+    font-size: 0.85rem;
+    /* Enhanced visibility for light mode input */
+    color: #1a1a1a;
+    background: color-mix(in srgb, var(--primary, #4f46e5) 35%, rgba(255,255,255,0.95));
+    border: 1px solid color-mix(in srgb, var(--primary, #4f46e5) 60%, rgba(255,255,255,0.8));
+    padding: 8px 12px; 
+    border-radius: 999px; 
+    font-family: 'Courier New', monospace;
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+    text-align: center;
+    z-index: 2;
+  }
+
+  /* Dark mode - clean glassmorphism */
+  @media (prefers-color-scheme: dark) {
+    #tasksSection .task-item { 
+      background: color-mix(in srgb, var(--white) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--white) 20%, transparent);
+      backdrop-filter: blur(25px) saturate(130%);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255,255,255,0.1)
+    }
+    /* Subtle gradient glow only in dark mode */
+    #tasksSection .task-item::before {
+      content: '';
+      position: absolute;
+      inset: -5% -8% -10% -8%;
+      background:
+        radial-gradient(50% 60% at 30% 70%, rgba(99, 102, 241, 0.3) 0%, transparent 70%),
+        radial-gradient(45% 50% at 70% 30%, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+      filter: blur(20px);
+      opacity: 0.4;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #tasksSection .task-item::after { content: none; }
+    #tasksSection .task-time {
+      /* Enhanced visibility for dark mode */
+      color: #ffffff;
+      font-weight: 800;
+      background: color-mix(in srgb, var(--primary, #6366f1) 40%, rgba(255,255,255,0.15));
+      border: 1px solid color-mix(in srgb, var(--primary, #6366f1) 60%, rgba(255,255,255,0.25));
+      backdrop-filter: blur(20px) saturate(150%);
+      box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    #tasksSection .time-input {
+      color: #ffffff;
+      font-weight: 800;
+      background: color-mix(in srgb, var(--primary, #6366f1) 40%, rgba(255,255,255,0.15));
+      border: 1px solid color-mix(in srgb, var(--primary, #6366f1) 45%, rgba(255,255,255,0.2));
+      backdrop-filter: blur(15px) saturate(140%);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+  }
+}

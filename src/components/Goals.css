@@ -21,17 +21,21 @@
   gap: 0.75rem;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  /* True glassmorphism for goals */
+  background: color-mix(in srgb, var(--white) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--white) 32%, transparent);
   border-radius: 8px;
+  backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
   cursor: pointer;
   transition: var(--transition);
 }
 
 .goal-item:hover {
-  background: var(--gray-100);
+  background: color-mix(in srgb, var(--white) 28%, transparent);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3);
+  backdrop-filter: blur(22px) saturate(160%);
 }
 
 .goal-item.completed {
@@ -65,9 +69,12 @@
 }
 
 .add-goal-btn {
-  background: var(--primary);
+  /* Glass button */
+  background: color-mix(in srgb, var(--primary) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 60%, transparent);
+  backdrop-filter: blur(15px) saturate(140%);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255,255,255,0.2);
   color: white;
-  border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius);
   cursor: pointer;

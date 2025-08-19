@@ -1,0 +1,142 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: grid;
+  place-items: center;
+  z-index: 20000; /* above FocusMode (10000) */
+  pointer-events: none; /* allow clicking underlying UI except cards/hints */
+  transition: background .22s ease-out;
+}
+
+.onboarding-card {
+  width: min(520px, 92vw);
+  background: var(--card-bg, #111);
+  color: var(--text, #fff);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 24px;
+  animation: fadeInUp .25s ease-out;
+  pointer-events: auto; /* capture clicks */
+  z-index: 20001; /* ensure above any underlying overlays */
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.onboarding-step {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.onboarding-title {
+  margin: 8px 0 6px;
+  font-size: 22px;
+}
+
+.onboarding-text {
+  margin: 0 0 18px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn { 
+  border: 0; 
+  border-radius: 10px; 
+  padding: 10px 14px; 
+  cursor: pointer; 
+  font-weight: 600; 
+}
+
+.btn-primary {
+  background: var(--accent, #7367f0);
+  color: white;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.08);
+  color: var(--text, #fff);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Spotlight target element */
+.onboarding-spotlight {
+  z-index: 20002 !important; /* keep highlight above other UI if needed */
+  box-shadow: 0 0 0 3px rgba(115,103,240,0.8), 0 0 24px rgba(115,103,240,0.6) !important;
+  border-radius: 10px; /* safe default for buttons */
+  animation: pulse-glow 1.6s ease-in-out infinite;
+  transition: box-shadow .2s ease, transform .2s ease;
+  will-change: box-shadow, transform;
+}
+
+/* Floating hint near the target */
+.onboarding-hint {
+  position: fixed;
+  max-width: 300px;
+  background: var(--card-bg, #111);
+  color: var(--text, #fff);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  pointer-events: auto; /* allow interacting with hint buttons */
+  animation: fadeInUp .25s ease-out;
+  transition: top .2s ease, left .2s ease;
+  will-change: top, left;
+  z-index: 20001; /* above FocusMode overlay */
+}
+.hint-title { font-size: 16px; margin: 0 0 6px; }
+.hint-text  { font-size: 14px; margin: 0 0 10px; opacity: .9; }
+.hint-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 3px rgba(115,103,240,0.9), 0 0 24px rgba(115,103,240,0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(115,103,240,0.65), 0 0 36px rgba(115,103,240,0.85); }
+  100% { box-shadow: 0 0 0 3px rgba(115,103,240,0.9), 0 0 24px rgba(115,103,240,0.6); }
+}
+
+/* Mobile bottom sheet */
+.onboarding-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--card-bg, #111);
+  color: var(--text, #fff);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.35);
+  padding: 12px 16px 16px;
+  pointer-events: auto; /* capture interactions */
+  z-index: 20002;
+  animation: sheetUp .22s ease-out;
+}
+
+.sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.sheet-body { padding: 4px 0 8px; }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+@keyframes sheetUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .onboarding-hint { max-width: 280px; padding: 12px 14px; }
+}
