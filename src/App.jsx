@@ -15,6 +15,9 @@ import CelebrationOverlay from './components/CelebrationOverlay';
 import Onboarding from './components/Onboarding';
 import OnboardingMobile from './components/OnboardingMobile';
 import EnhancedPomodoroTimer from './components/EnhancedPomodoroTimer';
+import DecorStudio from './components/decor/DecorStudio.jsx';
+import { GamificationProvider } from './contexts/GamificationContext';
+import { Routes, Route } from 'react-router-dom';
 import './styles/variables.css';
 import './styles/base.css';
 
@@ -122,47 +125,57 @@ function App() {
   if (!tutorialLoaded) return null;
 
   return (
-    <div className="app-container active" id="appContainer">
-      <Header
-        onToggleTheme={toggleTheme}
-        onOpenHistory={openHistory}
-        isEditing={isEditing}
-        onToggleEdit={() => setIsEditing(!isEditing)}
-        onOpenSettings={openSettings}
-      />
-      <MobileEditButton
-        isEditing={isEditing}
-        onToggleEdit={() => setIsEditing(!isEditing)}
-      />
-      <MobileNav onToggleTheme={toggleTheme} />
-      <MainContent 
-        onStartFocusMode={startFocusMode}
-        onOpenGoalModal={openGoalModal}
-        onTriggerCelebration={triggerCelebration}
-        isEditing={isEditing}
-      />
-      <HistoryModal open={historyOpen} onClose={closeHistory} />
-      <GoalModal open={goalModalOpen} onClose={closeGoalModal} />
-      <SettingsModal
-        open={settingsOpen}
-        onClose={closeSettings}
-        onToggleTheme={toggleTheme}
-        currentTheme={theme}
-      />
-      <FocusMode 
-        active={focusMode.active}
-        task={focusMode.task}
-        duration={focusMode.duration}
-        remainingTime={focusMode.remainingTime}
-        onExit={exitFocusMode}
-      />
-      <CelebrationOverlay show={showCelebration} />
-      <EnhancedPomodoroTimer />
-      {!tutorialCompleted && (
-        // TEMP: force mobile tutorial for all screen sizes to validate phone flow
-        <OnboardingMobile onComplete={() => setTutorialCompleted(true)} />
-      )}
-    </div>
+    <GamificationProvider>
+      <Routes>
+        <Route path="/decor" element={<DecorStudio />} />
+        <Route
+          path="/"
+          element={
+            <div className="app-container active" id="appContainer">
+              <Header
+                onToggleTheme={toggleTheme}
+                onOpenHistory={openHistory}
+                isEditing={isEditing}
+                onToggleEdit={() => setIsEditing(!isEditing)}
+                onOpenSettings={openSettings}
+              />
+              <MobileEditButton
+                isEditing={isEditing}
+                onToggleEdit={() => setIsEditing(!isEditing)}
+              />
+              <MobileNav onToggleTheme={toggleTheme} />
+              <MainContent 
+                onStartFocusMode={startFocusMode}
+                onOpenGoalModal={openGoalModal}
+                onTriggerCelebration={triggerCelebration}
+                isEditing={isEditing}
+              />
+              <HistoryModal open={historyOpen} onClose={closeHistory} />
+              <GoalModal open={goalModalOpen} onClose={closeGoalModal} />
+              <SettingsModal
+                open={settingsOpen}
+                onClose={closeSettings}
+                onToggleTheme={toggleTheme}
+                currentTheme={theme}
+              />
+              <FocusMode 
+                active={focusMode.active}
+                task={focusMode.task}
+                duration={focusMode.duration}
+                remainingTime={focusMode.remainingTime}
+                onExit={exitFocusMode}
+              />
+              <CelebrationOverlay show={showCelebration} />
+              <EnhancedPomodoroTimer />
+              {!tutorialCompleted && (
+                // TEMP: force mobile tutorial for all screen sizes to validate phone flow
+                <OnboardingMobile onComplete={() => setTutorialCompleted(true)} />
+              )}
+            </div>
+          }
+        />
+      </Routes>
+    </GamificationProvider>
   );
 }
 

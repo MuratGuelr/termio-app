@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef2ff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="sideWallGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e5e7eb"/>
+      <stop offset="100%" stop-color="#d1d5db"/>
+    </linearGradient>
+    <linearGradient id="floorGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d4b090"/>
+      <stop offset="100%" stop-color="#c49a7a"/>
+    </linearGradient>
+  </defs>
+  <!-- Back wall -->
+  <rect x="180" y="60" width="840" height="360" fill="url(#wallGrad)" stroke="#cbd5e1"/>
+  <!-- Left wall -->
+  <polygon points="0,90 180,60 180,420 0,420" fill="url(#sideWallGrad)"/>
+  <!-- Right wall -->
+  <polygon points="1200,90 1020,60 1020,420 1200,420" fill="url(#sideWallGrad)"/>
+  <!-- Floor (simple perspective) -->
+  <polygon points="120,420 1080,420 1120,660 80,660" fill="url(#floorGrad)"/>
+  <!-- Window -->
+  <rect x="270" y="110" width="120" height="90" fill="#7dd3fc" stroke="#1e293b" stroke-width="6"/>
+  <line x1="270" y1="155" x2="390" y2="155" stroke="#1e293b" stroke-width="2"/>
+  <line x1="330" y1="110" x2="330" y2="200" stroke="#1e293b" stroke-width="2"/>
+  <!-- Minimal door frame hint -->
+  <rect x="580" y="215" width="60" height="165" fill="#374151" rx="6"/>
+</svg>

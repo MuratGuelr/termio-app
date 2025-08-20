@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#cfe9ff"/>
+      <stop offset="100%" stop-color="#8cc7ff"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7bd66b"/>
+      <stop offset="100%" stop-color="#49b24e"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <linearGradient id="door" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- Ground -->
+  <path d="M0,660 C350,600 800,720 1600,660 L1600,900 L0,900 Z" fill="url(#grass)"/>
+
+  <!-- House shadow on ground -->
+  <ellipse cx="800" cy="720" rx="340" ry="40" fill="rgba(0,0,0,0.12)"/>
+
+  <!-- House body -->
+  <g transform="translate(520,360)">
+    <!-- Main walls -->
+    <rect x="0" y="80" width="560" height="260" fill="url(#wall)" stroke="#cbd5e1" stroke-width="4"/>
+    <!-- Roof -->
+    <polygon points="-20,80 280,-20 580,80" fill="url(#roof)" stroke="#7f1d1d" stroke-width="4"/>
+    <!-- Door -->
+    <rect x="260" y="240" width="60" height="100" rx="6" fill="url(#door)"/>
+    <circle cx="312" cy="290" r="4" fill="#fbbf24"/>
+    <!-- Windows -->
+    <g fill="url(#window)" stroke="#1e293b" stroke-width="6">
+      <rect x="80" y="140" width="100" height="70"/>
+      <rect x="380" y="140" width="100" height="70"/>
+    </g>
+    <g stroke="#1e293b" stroke-width="2">
+      <line x1="80" y1="175" x2="180" y2="175"/>
+      <line x1="130" y1="140" x2="130" y2="210"/>
+      <line x1="380" y1="175" x2="480" y2="175"/>
+      <line x1="430" y1="140" x2="430" y2="210"/>
+    </g>
+    <!-- Base platform -->
+    <rect x="-20" y="340" width="600" height="14" rx="4" fill="#94a3b8" opacity="0.6"/>
+  </g>
+
+  <!-- Distant hills -->
+  <path d="M1100,900 C1080,810 980,770 880,750 C810,735 760,730 700,700 C650,675 610,660 560,655 C520,650 500,652 470,660 C410,675 370,710 360,900 Z" fill="#a2a9b0"/>
+  <path d="M1100,900 C1090,830 990,795 900,775 C820,757 760,752 700,720 C650,694 610,680 560,675 C525,671 505,673 475,680 C420,692 385,725 375,900 Z" fill="#c9ced3" opacity="0.55"/>
+</svg>

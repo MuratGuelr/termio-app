@@ -1429,10 +1429,6 @@ background: rgba(99, 102, 241, 0.1);
 color: var(--gray-300);
 }
 
-[data-theme="dark"] .timer-info {
-background: var(--gray-700);
-}
-
 [data-theme="dark"] .achievement-icon {
 background: var(--gray-700);
 }

@@ -7,10 +7,40 @@ const GamificationContext = createContext();
 
 export function useGamification() {
   const context = useContext(GamificationContext);
-  if (!context) {
-    throw new Error('useGamification must be used within a GamificationProvider');
-  }
-  return context;
+  if (context) return context;
+  // Safe fallback to avoid runtime errors when provider is missing.
+  // Provides minimal no-op implementations used by dependent components.
+  const fallback = {
+    userStats: {
+      xp: 0,
+      level: 1,
+      achievements: [],
+      pomodoroSessions: 0,
+      decor: { inventory: [], placed: [] },
+      streaks: { currentTaskStreak: 0, longestTaskStreak: 0, habitStreaks: {} },
+      totalTasksCompleted: 0,
+      totalHabitsCompleted: 0
+    },
+    loading: false,
+    awardXP: async () => ({ leveledUp: false, newLevel: 1, newXP: 0 }),
+    spendXP: async () => ({ ok: false, reason: 'provider_missing', xp: 0 }),
+    addDecorToInventory: async () => ({ ok: false, reason: 'provider_missing' }),
+    placeDecor: async () => ({ ok: false, reason: 'provider_missing' }),
+    updateDecorPosition: async () => ({ ok: false, reason: 'provider_missing' }),
+    removeDecor: async () => ({ ok: false, reason: 'provider_missing' }),
+    updateDecorScale: async () => ({ ok: false, reason: 'provider_missing' }),
+    purchaseLand: async () => ({ ok: false, reason: 'provider_missing' }),
+    buildHouseStage: async () => ({ ok: false, reason: 'provider_missing' }),
+    checkAchievements: async () => [],
+    trackTaskCompletion: async () => {},
+    trackHabitCompletion: async () => {},
+    trackPomodoroSession: async () => {},
+    updateStreaks: async () => {},
+    achievements: {},
+    calculateLevel: (xp) => Math.floor(Math.sqrt((xp || 0) / 100)) + 1,
+    xpForNextLevel: (lvl) => (lvl * lvl) * 100
+  };
+  return fallback;
 }
 
 // Achievement definitions
@@ -49,13 +79,25 @@ export function GamificationProvider({ children }) {
     level: 1,
     achievements: [],
     streaks: {
-      currentTaskStreak: 0,
-      longestTaskStreak: 0,
-      habitStreaks: {}
+      current: 0,
+      longest: 0,
+      lastCompletionDate: null
     },
+    house: {
+      landPurchased: false,
+      buildingStage: 'none', // 'none', 'foundation', 'walls', 'roof', 'completed'
+      exteriorDecor: {
+        inventory: [],
+        placed: []
+      },
+      interiorDecor: {
+        inventory: [],
+        placed: []
+      }
+    },
+    pomodoroSessions: 0,
     totalTasksCompleted: 0,
-    totalHabitsCompleted: 0,
-    pomodoroSessions: 0
+    totalHabitsCompleted: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -87,6 +129,173 @@ export function GamificationProvider({ children }) {
     if (!user) return;
     const ref = doc(db, 'users', user.uid, 'gamification', 'stats');
     await setDoc(ref, newStats, { merge: true });
+  };
+
+  // Spend XP safely for purchases
+  const spendXP = async (amount) => {
+    if (amount <= 0) return { ok: true, xp: userStats.xp };
+    if (userStats.xp < amount) {
+      return { ok: false, reason: 'not_enough_xp', xp: userStats.xp };
+    }
+    const newXP = userStats.xp - amount;
+    const newLevel = calculateLevel(newXP);
+    const updatedStats = { ...userStats, xp: newXP, level: newLevel };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true, xp: newXP };
+  };
+
+  // Decor inventory helpers
+  const addDecorToInventory = async (item, area = 'exterior') => {
+    const targetArea = area === 'interior' ? 'interiorDecor' : 'exteriorDecor';
+    const updatedStats = {
+      ...userStats,
+      house: {
+        ...userStats.house,
+        [targetArea]: {
+          ...userStats.house?.[targetArea],
+          inventory: [...(userStats.house?.[targetArea]?.inventory || []), item]
+        }
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const placeDecor = async (id, x, y, area = 'exterior') => {
+    const targetArea = area === 'interior' ? 'interiorDecor' : 'exteriorDecor';
+    const inv = userStats.house?.[targetArea]?.inventory || [];
+    const item = inv.find(i => i.id === id);
+    if (!item) return { ok: false, reason: 'not_owned' };
+    
+    const updatedStats = {
+      ...userStats,
+      house: {
+        ...userStats.house,
+        [targetArea]: {
+          ...userStats.house?.[targetArea],
+          placed: [...(userStats.house?.[targetArea]?.placed || []), { id, x, y, scale: 1 }]
+        }
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const updateDecorPosition = async (id, x, y, area = 'exterior') => {
+    const targetArea = area === 'interior' ? 'interiorDecor' : 'exteriorDecor';
+    const placed = userStats.house?.[targetArea]?.placed || [];
+    const exists = placed.some(p => p.id === id);
+    if (!exists) return { ok: false, reason: 'not_placed' };
+    
+    const newPlaced = placed.map(p => (p.id === id ? { ...p, x, y } : p));
+    const updatedStats = {
+      ...userStats,
+      house: {
+        ...userStats.house,
+        [targetArea]: {
+          ...userStats.house?.[targetArea],
+          placed: newPlaced
+        }
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const removeDecor = async (id, area = 'exterior') => {
+    const targetArea = area === 'interior' ? 'interiorDecor' : 'exteriorDecor';
+    const placed = userStats.house?.[targetArea]?.placed || [];
+    const newPlaced = placed.filter(p => p.id !== id);
+    
+    const updatedStats = {
+      ...userStats,
+      house: {
+        ...userStats.house,
+        [targetArea]: {
+          ...userStats.house?.[targetArea],
+          placed: newPlaced
+        }
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const updateDecorScale = async (id, scale, area = 'exterior') => {
+    const targetArea = area === 'interior' ? 'interiorDecor' : 'exteriorDecor';
+    const placed = userStats.house?.[targetArea]?.placed || [];
+    const exists = placed.some(p => p.id === id);
+    if (!exists) return { ok: false, reason: 'not_placed' };
+    
+    const clamped = Math.max(0.5, Math.min(2, scale));
+    const newPlaced = placed.map(p => (p.id === id ? { ...p, scale: clamped } : p));
+    const updatedStats = {
+      ...userStats,
+      house: {
+        ...userStats.house,
+        [targetArea]: {
+          ...userStats.house?.[targetArea],
+          placed: newPlaced
+        }
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const purchaseLand = async () => {
+    const landCost = 500; // XP cost for land
+    if (userStats.xp < landCost) return { ok: false, reason: 'insufficient_xp' };
+    if (userStats.house?.landPurchased) return { ok: false, reason: 'already_purchased' };
+    
+    const updatedStats = {
+      ...userStats,
+      xp: userStats.xp - landCost,
+      house: {
+        ...userStats.house,
+        landPurchased: true
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
+  };
+
+  const buildHouseStage = async (stage) => {
+    const stageCosts = {
+      foundation: 300,
+      walls: 400,
+      roof: 350
+    };
+    const stageOrder = ['foundation', 'walls', 'roof'];
+    const currentStage = userStats.house?.buildingStage || 'land';
+    const currentStageIndex = stageOrder.indexOf(currentStage);
+    const nextStageIndex = stageOrder.indexOf(stage);
+    
+    // Allow progression from 'land' to 'foundation' (index -1 to 0)
+    const expectedIndex = currentStage === 'land' ? -1 : currentStageIndex;
+    if (nextStageIndex !== expectedIndex + 1) return { ok: false, reason: 'wrong_order' };
+    if (userStats.xp < stageCosts[stage]) return { ok: false, reason: 'insufficient_xp' };
+    if (!userStats.house?.landPurchased) return { ok: false, reason: 'no_land' };
+    
+    const newStage = stage === 'roof' ? 'completed' : stage;
+    const updatedStats = {
+      ...userStats,
+      xp: userStats.xp - stageCosts[stage],
+      house: {
+        ...userStats.house,
+        buildingStage: newStage
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    return { ok: true };
   };
 
   // Award XP and check for achievements
@@ -266,10 +475,14 @@ export function GamificationProvider({ children }) {
       pomodoroSessions: userStats.pomodoroSessions + 1
     };
 
-    // Check for pomodoro achievement
-    if (updatedStats.pomodoroSessions >= 25 && !userStats.achievements.includes('pomodoro_master')) {
-      updatedStats.achievements = [...updatedStats.achievements, 'pomodoro_master'];
-      await awardXP(ACHIEVEMENTS.pomodoro_master.xp, 'achievement');
+    // Check for pomodoro achievement (25 sessions)
+    const pomodoroAchievement = ACHIEVEMENTS.POMODORO_MASTER;
+    if (
+      updatedStats.pomodoroSessions >= 25 &&
+      !userStats.achievements.includes(pomodoroAchievement.id)
+    ) {
+      updatedStats.achievements = [...updatedStats.achievements, pomodoroAchievement.id];
+      await awardXP(pomodoroAchievement.xp, 'achievement');
     }
 
     setUserStats(updatedStats);
@@ -281,6 +494,14 @@ export function GamificationProvider({ children }) {
     userStats,
     loading,
     awardXP,
+    spendXP,
+    purchaseLand,
+    buildHouseStage,
+    addDecorToInventory,
+    placeDecor,
+    updateDecorPosition,
+    removeDecor,
+    updateDecorScale,
     checkAchievements,
     trackTaskCompletion,
     trackHabitCompletion,
