@@ -220,6 +220,44 @@
   gap: 0.5rem;
 }
 
+.decor-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  backdrop-filter: blur(15px);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  box-shadow: 0 8px 22px rgba(99, 102, 241, 0.22);
+}
+
+.decor-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.decor-btn:hover {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.32);
+}
+
+.decor-btn i {
+  pointer-events: none;
+}
+
 .settings-btn,
 .minimize-btn {
   width: 36px;

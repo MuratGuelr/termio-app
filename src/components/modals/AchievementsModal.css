@@ -1,0 +1,119 @@
+.achievements-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, rgba(0,0,0,0.65) 60%, var(--bg) 40%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+.achievements-card {
+  width: min(840px, 92vw);
+  max-height: min(80vh, 900px);
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--gradient-primary);
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.22);
+  backdrop-filter: saturate(150%) blur(10px);
+  -webkit-backdrop-filter: saturate(150%) blur(10px);
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+}
+
+.achievements-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+}
+
+.achievements-grid {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  overflow: auto;
+}
+
+.achievement-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  opacity: 0.6;
+}
+
+.achievement-item.unlocked {
+  opacity: 1;
+  background: color-mix(in oklab, var(--success, #22c55e) 12%, transparent);
+  border-color: color-mix(in oklab, var(--success, #22c55e) 28%, transparent);
+}
+
+.achievement-icon {
+  font-size: 24px;
+}
+
+.achievement-meta {
+  display: grid;
+}
+
+.achievement-title {
+  font-weight: 700;
+}
+
+.achievement-desc {
+  opacity: 0.85;
+  font-size: 0.9rem;
+}
+
+.achievement-xp {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.achievements-actions {
+  padding: 12px 16px;
+  border-top: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Progress for locked achievements */
+.achievement-progress {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.progress-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, transparent);
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), color-mix(in oklab, var(--success, #22c55e) 60%, var(--primary)));
+  box-shadow: 0 0 12px color-mix(in oklab, var(--primary) 50%, transparent);
+}
+
+.progress-hint {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}

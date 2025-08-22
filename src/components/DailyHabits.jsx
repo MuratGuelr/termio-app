@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { useGamification } from '../contexts/GamificationContext';
 import './DailyHabits.css';
 
 const defaultHabits = [
@@ -14,6 +15,7 @@ const defaultHabits = [
 
 export default function DailyHabits({ completedHabits, onToggleHabit, isEditing }) {
   const { user } = useAuth();
+  const { userStats } = useGamification();
   const [habits, setHabits] = useState(defaultHabits);
   const [loading, setLoading] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(null);
@@ -234,7 +236,22 @@ export default function DailyHabits({ completedHabits, onToggleHabit, isEditing 
                 <div className="habit-name">{habit.name}</div>
               )}
               
-              <div className="habit-streak">{habit.streak} gün</div>
+              {(() => {
+                // 02:00 TRT cutoff: subtract 2 hours for day keys
+                const base = new Date();
+                base.setHours(base.getHours() - 2);
+                const todayKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
+                const y = new Date(base); y.setDate(y.getDate() - 1);
+                const yesterdayKey = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2,'0')}-${String(y.getDate()).padStart(2,'0')}`;
+                const s = userStats?.streaks?.habits?.[habit.id];
+                let display = 0;
+                if (s?.lastCompletionDate === todayKey || s?.lastCompletionDate === yesterdayKey) {
+                  display = s.current || 0;
+                }
+                return (
+                  <div className="habit-streak">{display} gün</div>
+                );
+              })()}
               
               {isEditing && (
                 <button className="icon-btn delete-btn" onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }}>

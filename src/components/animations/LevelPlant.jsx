@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PalmGrowthSVG from './PalmGrowthSVG.jsx';
 import PlantStage01 from './stages/PlantStage01.jsx';
+import './LevelPlant.css';
 
 // Selects which plant stage to render based on the user's level.
 // For now only Stage01 exists (levels 1-4). Other ranges fall back to PalmGrowthSVG
@@ -12,6 +13,23 @@ export default function LevelPlant({
   timerColor = '#10b981',
   className = 'plant-svg'
 }) {
+  const [anim, setAnim] = useState(null); // 'level' | 'rank' | null
+  useEffect(() => {
+    const onLevelUp = () => {
+      setAnim('level');
+      setTimeout(() => setAnim(null), 1200);
+    };
+    const onRankUp = () => {
+      setAnim('rank');
+      setTimeout(() => setAnim(null), 1400);
+    };
+    window.addEventListener('level_up', onLevelUp);
+    window.addEventListener('rank_up', onRankUp);
+    return () => {
+      window.removeEventListener('level_up', onLevelUp);
+      window.removeEventListener('rank_up', onRankUp);
+    };
+  }, []);
   // Determine stage by level range
   let StageComponent = null;
   let extraProps = {};
@@ -34,12 +52,15 @@ export default function LevelPlant({
   }
 
   return (
-    <StageComponent
-      growth={growth}
-      miniProgress={miniProgress}
-      timerColor={timerColor}
-      className={className}
-      {...extraProps}
-    />
+    <div className={`level-plant-wrap ${anim ? `glow-${anim}` : ''}`}>
+      <StageComponent
+        growth={growth}
+        miniProgress={miniProgress}
+        timerColor={timerColor}
+        className={className}
+        {...extraProps}
+      />
+      {anim && <div className={`sparkle-layer ${anim}`} aria-hidden="true" />}
+    </div>
   );
 }

@@ -1,0 +1,81 @@
+/* LevelPlant animations: glow + sparkle on level/rank up */
+
+.level-plant-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* Subtle scale + glow for level up */
+.glow-level {
+  animation: lp-scale 1.0s ease, lp-glow-green 1.0s ease;
+}
+
+/* Stronger golden glow for rank up */
+.glow-rank {
+  animation: lp-scale-strong 1.2s ease, lp-glow-gold 1.2s ease;
+}
+
+@keyframes lp-scale {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes lp-scale-strong {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes lp-glow-green {
+  0% { filter: drop-shadow(0 0 0 rgba(16,185,129,0)); }
+  30% { filter: drop-shadow(0 0 18px rgba(16,185,129,0.6)); }
+  100% { filter: drop-shadow(0 0 0 rgba(16,185,129,0)); }
+}
+
+@keyframes lp-glow-gold {
+  0% { filter: drop-shadow(0 0 0 rgba(234,179,8,0)); }
+  30% { filter: drop-shadow(0 0 22px rgba(234,179,8,0.7)); }
+  100% { filter: drop-shadow(0 0 0 rgba(234,179,8,0)); }
+}
+
+/* Sparkles */
+.sparkle-layer {
+  pointer-events: none;
+  position: absolute;
+  inset: -8px; /* bleed a bit outside */
+  background: radial-gradient(120px 120px at 30% 30%, rgba(255,255,255,0.35), transparent 60%),
+              radial-gradient(160px 160px at 70% 40%, rgba(255,255,255,0.18), transparent 65%),
+              radial-gradient(140px 140px at 45% 70%, rgba(255,255,255,0.22), transparent 65%);
+  opacity: 0;
+}
+
+.sparkle-layer.level {
+  animation: lp-sparkle 1.0s ease forwards;
+}
+
+.sparkle-layer.rank {
+  animation: lp-sparkle-strong 1.2s ease forwards;
+}
+
+@keyframes lp-sparkle {
+  0% { opacity: 0; }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+@keyframes lp-sparkle-strong {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .glow-level,
+  .glow-rank,
+  .sparkle-layer.level,
+  .sparkle-layer.rank {
+    animation: none !important;
+  }
+}

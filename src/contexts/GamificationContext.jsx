@@ -17,7 +17,11 @@ export function useGamification() {
       achievements: [],
       pomodoroSessions: 0,
       decor: { inventory: [], placed: [] },
-      streaks: { currentTaskStreak: 0, longestTaskStreak: 0, habitStreaks: {} },
+      streaks: {
+        daily: { current: 0, longest: 0, lastActivityDate: null },
+        tasks: { current: 0, longest: 0, lastCompletionDate: null },
+        habits: {}
+      },
       totalTasksCompleted: 0,
       totalHabitsCompleted: 0
     },
@@ -36,9 +40,16 @@ export function useGamification() {
     trackHabitCompletion: async () => {},
     trackPomodoroSession: async () => {},
     updateStreaks: async () => {},
+    updateDailyStreak: async () => {},
+    updateTaskStreak: async () => {},
+    updateHabitStreak: async () => {},
     achievements: {},
     calculateLevel: (xp) => Math.floor(Math.sqrt((xp || 0) / 100)) + 1,
-    xpForNextLevel: (lvl) => (lvl * lvl) * 100
+    xpForNextLevel: (lvl) => (lvl * lvl) * 100,
+    canUseWeeklyPass: () => ({ ok: false, reason: 'provider_missing' }),
+    useWeeklyPass: async () => ({ ok: false, reason: 'provider_missing' }),
+    canUndoWeeklyPass: () => ({ ok: false, reason: 'provider_missing' }),
+    undoWeeklyPass: async () => ({ ok: false, reason: 'provider_missing' })
   };
   return fallback;
 }
@@ -56,7 +67,10 @@ const ACHIEVEMENTS = {
   PRODUCTIVE_WEEK: { id: 'productive_week', name: 'Verimli Hafta', description: 'Haftalık ortalama %80 üzeri', icon: '📈', xp: 400 },
   LEVEL_5: { id: 'level_5', name: 'Deneyimli', description: '5. seviyeye ulaş', icon: '🌟', xp: 0 },
   LEVEL_10: { id: 'level_10', name: 'Uzman', description: '10. seviyeye ulaş', icon: '💫', xp: 0 },
-  POMODORO_MASTER: { id: 'pomodoro_master', name: 'Pomodoro Ustası', description: '25 pomodoro tamamla', icon: '🍅', xp: 300 }
+  POMODORO_MASTER: { id: 'pomodoro_master', name: 'Pomodoro Ustası', description: '25 pomodoro tamamla', icon: '🍅', xp: 300 },
+  DAILY_STREAK_3: { id: 'daily_streak_3', name: 'Isınıyorum', description: '3 gün üst üste aktif ol', icon: '🔥', xp: 100 },
+  DAILY_STREAK_7: { id: 'daily_streak_7', name: 'Ritmi Yakaladım', description: '7 gün üst üste aktif ol', icon: '⚡', xp: 250 },
+  DAILY_STREAK_30: { id: 'daily_streak_30', name: 'Demir İrade', description: '30 gün üst üste aktif ol', icon: '🏅', xp: 800 }
 };
 
 // Level calculation
@@ -68,8 +82,65 @@ function xpForNextLevel(currentLevel) {
   return (currentLevel * currentLevel) * 100;
 }
 
+// Rank thresholds
+const RANKS = [
+  { minLevel: 1, name: 'Novice', icon: '🐣' },
+  { minLevel: 5, name: 'Bronz', icon: '🥉' },
+  { minLevel: 10, name: 'Gümüş', icon: '🥈' },
+  { minLevel: 15, name: 'Altın', icon: '🥇' },
+  { minLevel: 20, name: 'Elmas', icon: '💎' },
+  { minLevel: 30, name: 'Usta', icon: '🏆' }
+];
+
+function getRankForLevel(level) {
+  let current = RANKS[0];
+  for (const r of RANKS) {
+    if (level >= r.minLevel) current = r; else break;
+  }
+  return current;
+}
+
 function dateKey(d = new Date()) {
-  return d.toISOString().slice(0, 10);
+  // Istanbul day cutoff at 02:00 local time: subtract 2h before formatting
+  const t = new Date(d);
+  t.setHours(t.getHours() - 2);
+  const year = t.getFullYear();
+  const month = String(t.getMonth() + 1).padStart(2, '0');
+  const day = String(t.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function previousDateKey(d = new Date()) {
+  const y = new Date(d);
+  y.setDate(y.getDate() - 1);
+  return dateKey(y);
+}
+
+// Helpers for weekly pass (ISO week, Monday start), with 02:00 TRT cutoff
+function getTRTDate(base = new Date()) {
+  const t = new Date(base);
+  t.setHours(t.getHours() - 2);
+  return t;
+}
+
+function isWeekdayTRT(d = new Date()) {
+  const t = getTRTDate(d);
+  const dow = t.getDay(); // 0 Sun ... 6 Sat
+  return dow >= 1 && dow <= 5; // Mon-Fri only
+}
+
+function isoWeekKeyTRT(d = new Date()) {
+  const t = getTRTDate(d);
+  // Copy date and set to Thursday of this week for ISO week-year
+  const dt = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
+  const dayNum = (dt.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+  dt.setUTCDate(dt.getUTCDate() - dayNum + 3); // Thu
+  const firstThursday = new Date(Date.UTC(dt.getUTCFullYear(), 0, 4));
+  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+  const weekNo = 1 + Math.round((dt - firstThursday) / (7 * 24 * 3600 * 1000));
+  const weekYear = dt.getUTCFullYear();
+  return `${weekYear}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 export function GamificationProvider({ children }) {
@@ -77,11 +148,12 @@ export function GamificationProvider({ children }) {
   const [userStats, setUserStats] = useState({
     xp: 0,
     level: 1,
+    rank: getRankForLevel(1),
     achievements: [],
     streaks: {
-      current: 0,
-      longest: 0,
-      lastCompletionDate: null
+      daily: { current: 0, longest: 0, lastActivityDate: null },
+      tasks: { current: 0, longest: 0, lastCompletionDate: null },
+      habits: {}
     },
     house: {
       landPurchased: false,
@@ -97,9 +169,19 @@ export function GamificationProvider({ children }) {
     },
     pomodoroSessions: 0,
     totalTasksCompleted: 0,
-    totalHabitsCompleted: 0
+    totalHabitsCompleted: 0,
+    weeklyPass: { weekKey: null, used: false, snapshot: null }
   });
   const [loading, setLoading] = useState(true);
+
+  // Emit helper for UI events (toasts/modals)
+  const emit = (name, detail) => {
+    try {
+      window.dispatchEvent(new CustomEvent(name, { detail }));
+    } catch (e) {
+      // no-op
+    }
+  };
 
   // Load user stats
   useEffect(() => {
@@ -115,7 +197,8 @@ export function GamificationProvider({ children }) {
         setUserStats(prev => ({
           ...prev,
           ...data,
-          level: calculateLevel(data.xp || 0)
+          level: calculateLevel(data.xp || 0),
+          rank: data.rank || getRankForLevel(calculateLevel(data.xp || 0))
         }));
       }
       setLoading(false);
@@ -129,6 +212,168 @@ export function GamificationProvider({ children }) {
     if (!user) return;
     const ref = doc(db, 'users', user.uid, 'gamification', 'stats');
     await setDoc(ref, newStats, { merge: true });
+  };
+
+  // Weekly pass API
+  const canUseWeeklyPass = (base = new Date()) => {
+    const wk = isoWeekKeyTRT(base);
+    // Only Mon-Fri allowed
+    if (!isWeekdayTRT(base)) return { ok: false, reason: 'weekend_not_allowed' };
+    if (userStats.weeklyPass?.weekKey === wk && userStats.weeklyPass?.used) {
+      return { ok: false, reason: 'already_used_this_week' };
+    }
+    return { ok: true };
+  };
+
+  const undoWeeklyPass = async () => {
+    const now = new Date();
+    const today = dateKey(now);
+    const wk = isoWeekKeyTRT(now);
+    const wp = userStats.weeklyPass || {};
+    if (!wp.used) return { ok: false, reason: 'not_used' };
+    if (wp.weekKey !== wk) return { ok: false, reason: 'different_week' };
+    let snap = wp.snapshot || null;
+    let allowSameDay = (snap && snap.day === today) || wp.lastUsedDay === today;
+    // If still not allowed, check today's day doc for passUsed flag
+    if (!allowSameDay && user) {
+      try {
+        const dayRef = doc(db, 'users', user.uid, 'days', today);
+        const daySnap = await getDoc(dayRef);
+        if (daySnap.exists() && daySnap.data()?.passUsed) {
+          allowSameDay = true;
+        }
+      } catch (_) {}
+    }
+    if (!allowSameDay) return { ok: false, reason: 'not_today' };
+
+    // 1) Unset pass on day doc
+    if (user) {
+      const dayRef = doc(db, 'users', user.uid, 'days', today);
+      await setDoc(dayRef, { passUsed: false, passTimestamp: null }, { merge: true });
+    }
+
+    // 2) Restore streaks from snapshot if available and same day; otherwise keep current streaks
+    let newStats;
+    if (snap && snap.day === today) {
+      const currentHabits = { ...(userStats.streaks?.habits || {}) };
+      const restoredHabits = { ...currentHabits };
+      if (snap.prevHabits) {
+        for (const hid of Object.keys(snap.prevHabits)) {
+          restoredHabits[hid] = { ...snap.prevHabits[hid] };
+        }
+      }
+      newStats = {
+        ...userStats,
+        weeklyPass: { weekKey: wp.weekKey, used: false, lastUsedDay: null, snapshot: null },
+        streaks: {
+          ...userStats.streaks,
+          daily: { ...snap.prevDaily },
+          tasks: { ...snap.prevTasks },
+          habits: restoredHabits
+        }
+      };
+      setUserStats(newStats);
+      await saveUserStats(newStats);
+      emit('streak_updated', { type: 'daily', current: newStats.streaks.daily.current, longest: newStats.streaks.daily.longest });
+      emit('streak_updated', { type: 'task', current: newStats.streaks.tasks.current, longest: newStats.streaks.tasks.longest });
+    } else {
+      // Fallback: just mark weekly pass as unused, do not mutate streaks
+      newStats = {
+        ...userStats,
+        weeklyPass: { weekKey: wp.weekKey, used: false, lastUsedDay: null, snapshot: null }
+      };
+      setUserStats(newStats);
+      await saveUserStats(newStats);
+    }
+    emit('pass_undone', { day: today, weekKey: wp.weekKey });
+    return { ok: true };
+  };
+
+  const canUndoWeeklyPass = (base = new Date()) => {
+    const wk = isoWeekKeyTRT(base);
+    const today = dateKey(base);
+    const wp = userStats.weeklyPass || {};
+    if (!wp.used) return { ok: false, reason: 'not_used' };
+    if (wp.weekKey !== wk) return { ok: false, reason: 'different_week' };
+    // Allow based on snapshot day OR recorded lastUsedDay
+    if ((wp.snapshot && wp.snapshot.day === today) || wp.lastUsedDay === today) return { ok: true };
+    return { ok: false, reason: 'not_today' };
+  };
+
+  const useWeeklyPass = async () => {
+    const now = new Date();
+    const eligible = canUseWeeklyPass(now);
+    if (!eligible.ok) return eligible;
+
+    const today = dateKey(now);
+    const weekKey = isoWeekKeyTRT(now);
+
+    // 1) Mark day document with passUsed
+    if (user) {
+      const dayRef = doc(db, 'users', user.uid, 'days', today);
+      await setDoc(dayRef, { passUsed: true, passTimestamp: new Date().toISOString() }, { merge: true });
+    }
+
+    // 2) Load habits from settings to update per-habit streaks
+    let habitIds = [];
+    try {
+      if (user) {
+        const habitsSnap = await getDoc(doc(db, 'users', user.uid, 'settings', 'habits'));
+        if (habitsSnap.exists()) {
+          const arr = Array.isArray(habitsSnap.data()?.habits) ? habitsSnap.data().habits : [];
+          habitIds = arr.map(h => h.id).filter(Boolean);
+        }
+      }
+    } catch (_) {}
+
+    // 3) Update streaks (treat today as completed for all streak types)
+    const prevDaily = userStats.streaks?.daily || { current: 0, longest: 0, lastActivityDate: null };
+    const prevTasks = userStats.streaks?.tasks || { current: 0, longest: 0, lastCompletionDate: null };
+    const yesterday = previousDateKey(now);
+
+    const nextDailyCurrent = prevDaily.lastActivityDate === today ? prevDaily.current : (prevDaily.lastActivityDate === yesterday ? prevDaily.current + 1 : 1);
+    const nextTasksCurrent = prevTasks.lastCompletionDate === today ? prevTasks.current : (prevTasks.lastCompletionDate === yesterday ? prevTasks.current + 1 : 1);
+
+    const nextHabits = { ...(userStats.streaks?.habits || {}) };
+    const snapshotHabits = {};
+    for (const hid of habitIds) {
+      const prev = nextHabits[hid] || { current: 0, longest: 0, lastCompletionDate: null };
+      snapshotHabits[hid] = { ...prev };
+      const nextCurrent = prev.lastCompletionDate === today ? prev.current : (prev.lastCompletionDate === yesterday ? prev.current + 1 : 1);
+      nextHabits[hid] = {
+        current: nextCurrent,
+        longest: Math.max(prev.longest || 0, nextCurrent),
+        lastCompletionDate: today
+      };
+    }
+
+    const updatedStats = {
+      ...userStats,
+      weeklyPass: {
+        weekKey,
+        used: true,
+        lastUsedDay: today,
+        snapshot: {
+          day: today,
+          prevDaily,
+          prevTasks,
+          prevHabits: snapshotHabits
+        }
+      },
+      streaks: {
+        ...userStats.streaks,
+        daily: { current: nextDailyCurrent, longest: Math.max(prevDaily.longest || 0, nextDailyCurrent), lastActivityDate: today },
+        tasks: { current: nextTasksCurrent, longest: Math.max(prevTasks.longest || 0, nextTasksCurrent), lastCompletionDate: today },
+        habits: nextHabits
+      }
+    };
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+
+    emit('pass_used', { day: today, weekKey });
+    emit('streak_updated', { type: 'daily', current: updatedStats.streaks.daily.current, longest: updatedStats.streaks.daily.longest });
+    emit('streak_updated', { type: 'task', current: updatedStats.streaks.tasks.current, longest: updatedStats.streaks.tasks.longest });
+    return { ok: true };
   };
 
   // Spend XP safely for purchases
@@ -303,11 +548,14 @@ export function GamificationProvider({ children }) {
     const newXP = userStats.xp + amount;
     const newLevel = calculateLevel(newXP);
     const leveledUp = newLevel > userStats.level;
+    const prevRank = userStats.rank || getRankForLevel(userStats.level);
+    const nextRank = getRankForLevel(newLevel);
     
     const updatedStats = {
       ...userStats,
       xp: newXP,
-      level: newLevel
+      level: newLevel,
+      rank: nextRank
     };
 
     // Check for level achievements
@@ -322,6 +570,16 @@ export function GamificationProvider({ children }) {
 
     setUserStats(updatedStats);
     await saveUserStats(updatedStats);
+
+    // Emit rank up when threshold crossed
+    if (nextRank?.name !== prevRank?.name) {
+      emit('rank_up', { from: prevRank, to: nextRank, level: newLevel });
+    }
+
+    // Emit level up event
+    if (leveledUp) {
+      emit('level_up', { from: userStats.level, to: newLevel, xp: newXP });
+    }
 
     return { leveledUp, newLevel, newXP };
   };
@@ -379,6 +637,9 @@ export function GamificationProvider({ children }) {
         await awardXP(totalXP, 'achievement');
       }
 
+      // emit achievements unlocked
+      emit('achievements_unlocked', { ids: newAchievements.map(id => ACHIEVEMENTS[id]) });
+
       return newAchievements.map(id => ACHIEVEMENTS[id]);
     }
 
@@ -386,47 +647,151 @@ export function GamificationProvider({ children }) {
   };
 
   // Update streaks
-  const updateStreaks = async (type, habitId = null) => {
+  const updateDailyStreak = async () => {
     const today = dateKey();
-    const yesterday = dateKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const yesterday = previousDateKey();
+    const prev = userStats.streaks?.daily || { current: 0, longest: 0, lastActivityDate: null };
 
+    let current = prev.current;
+    const broken = prev.lastActivityDate && prev.lastActivityDate !== today && prev.lastActivityDate !== yesterday;
+    if (prev.lastActivityDate === today) {
+      current = prev.current; // already counted for today
+    } else if (prev.lastActivityDate === yesterday) {
+      current = prev.current + 1;
+    } else {
+      current = 1;
+    }
+
+    const daily = {
+      current,
+      longest: Math.max(prev.longest || 0, current),
+      lastActivityDate: today
+    };
+
+    const updatedStats = {
+      ...userStats,
+      streaks: { ...userStats.streaks, daily }
+    };
+
+    // Daily streak achievements
+    const addIds = [];
+    if (daily.current >= 3 && !userStats.achievements.includes(ACHIEVEMENTS.DAILY_STREAK_3.id)) addIds.push(ACHIEVEMENTS.DAILY_STREAK_3.id);
+    if (daily.current >= 7 && !userStats.achievements.includes(ACHIEVEMENTS.DAILY_STREAK_7.id)) addIds.push(ACHIEVEMENTS.DAILY_STREAK_7.id);
+    if (daily.current >= 30 && !userStats.achievements.includes(ACHIEVEMENTS.DAILY_STREAK_30.id)) addIds.push(ACHIEVEMENTS.DAILY_STREAK_30.id);
+    if (addIds.length > 0) {
+      updatedStats.achievements = [...userStats.achievements, ...addIds];
+    }
+
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    // Award XP after save
+    for (const id of addIds) {
+      await awardXP(ACHIEVEMENTS[id.toUpperCase()]?.xp || ACHIEVEMENTS[id]?.xp || 0, 'streak');
+    }
+    if (broken && prev.current > 0) emit('streak_reset', { type: 'daily', previous: prev.current });
+    emit('streak_updated', { type: 'daily', current: daily.current, longest: daily.longest });
+    if (addIds.length) emit('achievements_unlocked', { ids: addIds.map(id => ACHIEVEMENTS[id]) });
+  };
+
+  const updateTaskStreak = async () => {
+    const today = dateKey();
+    const yesterday = previousDateKey();
+    const prev = userStats.streaks?.tasks || { current: 0, longest: 0, lastCompletionDate: null };
+
+    let current = prev.current;
+    const broken = prev.lastCompletionDate && prev.lastCompletionDate !== today && prev.lastCompletionDate !== yesterday;
+    if (prev.lastCompletionDate === today) {
+      current = prev.current; // already counted for today
+    } else if (prev.lastCompletionDate === yesterday) {
+      current = prev.current + 1;
+    } else {
+      current = 1;
+    }
+
+    const tasks = {
+      current,
+      longest: Math.max(prev.longest || 0, current),
+      lastCompletionDate: today
+    };
+
+    const updatedStats = {
+      ...userStats,
+      streaks: { ...userStats.streaks, tasks }
+    };
+
+    // Task streak achievements
+    if (tasks.current >= 3 && !userStats.achievements.includes(ACHIEVEMENTS.TASK_STREAK_3.id)) {
+      updatedStats.achievements = [...(updatedStats.achievements || userStats.achievements), ACHIEVEMENTS.TASK_STREAK_3.id];
+    }
+    if (tasks.current >= 7 && !userStats.achievements.includes(ACHIEVEMENTS.TASK_STREAK_7.id)) {
+      updatedStats.achievements = [...(updatedStats.achievements || userStats.achievements), ACHIEVEMENTS.TASK_STREAK_7.id];
+    }
+
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    // Award XP after save
+    if (tasks.current >= 3 && userStats.achievements.indexOf(ACHIEVEMENTS.TASK_STREAK_3.id) === -1) await awardXP(ACHIEVEMENTS.TASK_STREAK_3.xp, 'streak');
+    if (tasks.current >= 7 && userStats.achievements.indexOf(ACHIEVEMENTS.TASK_STREAK_7.id) === -1) await awardXP(ACHIEVEMENTS.TASK_STREAK_7.xp, 'streak');
+    if (broken && prev.current > 0) emit('streak_reset', { type: 'task', previous: prev.current });
+    emit('streak_updated', { type: 'task', current: tasks.current, longest: tasks.longest });
+    const unlocked = [];
+    if (tasks.current >= 3 && !userStats.achievements.includes(ACHIEVEMENTS.TASK_STREAK_3.id)) unlocked.push(ACHIEVEMENTS.TASK_STREAK_3);
+    if (tasks.current >= 7 && !userStats.achievements.includes(ACHIEVEMENTS.TASK_STREAK_7.id)) unlocked.push(ACHIEVEMENTS.TASK_STREAK_7);
+    if (unlocked.length) emit('achievements_unlocked', { ids: unlocked });
+  };
+
+  const updateHabitStreak = async (habitId) => {
+    if (!habitId) return;
+    const today = dateKey();
+    const yesterday = previousDateKey();
+    const prev = userStats.streaks?.habits?.[habitId] || { current: 0, longest: 0, lastCompletionDate: null };
+
+    let current = prev.current;
+    const broken = prev.lastCompletionDate && prev.lastCompletionDate !== today && prev.lastCompletionDate !== yesterday;
+    if (prev.lastCompletionDate === today) {
+      current = prev.current; // already counted for today
+    } else if (prev.lastCompletionDate === yesterday) {
+      current = prev.current + 1;
+    } else {
+      current = 1;
+    }
+
+    const habitEntry = {
+      current,
+      longest: Math.max(prev.longest || 0, current),
+      lastCompletionDate: today
+    };
+
+    const updatedStats = {
+      ...userStats,
+      streaks: {
+        ...userStats.streaks,
+        habits: { ...(userStats.streaks?.habits || {}), [habitId]: habitEntry }
+      }
+    };
+
+    // Habit streak achievement (7)
+    if (habitEntry.current >= 7 && !userStats.achievements.includes(ACHIEVEMENTS.HABIT_STREAK_7.id)) {
+      updatedStats.achievements = [...(updatedStats.achievements || userStats.achievements), ACHIEVEMENTS.HABIT_STREAK_7.id];
+    }
+
+    setUserStats(updatedStats);
+    await saveUserStats(updatedStats);
+    if (habitEntry.current >= 7 && userStats.achievements.indexOf(ACHIEVEMENTS.HABIT_STREAK_7.id) === -1) await awardXP(ACHIEVEMENTS.HABIT_STREAK_7.xp, 'streak');
+    if (broken && prev.current > 0) emit('streak_reset', { type: 'habit', habitId, previous: prev.current });
+    emit('streak_updated', { type: 'habit', habitId, current: habitEntry.current, longest: habitEntry.longest });
+    if (habitEntry.current >= 7 && !userStats.achievements.includes(ACHIEVEMENTS.HABIT_STREAK_7.id)) emit('achievements_unlocked', { ids: [ACHIEVEMENTS.HABIT_STREAK_7] });
+  };
+
+  const updateStreaks = async (type, habitId = null) => {
     if (type === 'task') {
-      // Check if user completed tasks yesterday to maintain streak
-      const yesterdayRef = doc(db, 'users', user.uid, 'days', yesterday);
-      const yesterdaySnap = await getDoc(yesterdayRef);
-      
-      let newStreak = 1;
-      if (yesterdaySnap.exists()) {
-        const yesterdayData = yesterdaySnap.data();
-        const yesterdayTasks = yesterdayData.tasks || [];
-        const yesterdayCompleted = yesterdayTasks.filter(t => t.done).length;
-        
-        if (yesterdayCompleted > 0) {
-          newStreak = userStats.streaks.currentTaskStreak + 1;
-        }
-      }
-
-      const updatedStats = {
-        ...userStats,
-        streaks: {
-          ...userStats.streaks,
-          currentTaskStreak: newStreak,
-          longestTaskStreak: Math.max(userStats.streaks.longestTaskStreak, newStreak)
-        }
-      };
-
-      // Check streak achievements
-      if (newStreak >= 3 && !userStats.achievements.includes('task_streak_3')) {
-        updatedStats.achievements = [...updatedStats.achievements, 'task_streak_3'];
-        await awardXP(ACHIEVEMENTS.task_streak_3.xp, 'streak');
-      }
-      if (newStreak >= 7 && !userStats.achievements.includes('task_streak_7')) {
-        updatedStats.achievements = [...updatedStats.achievements, 'task_streak_7'];
-        await awardXP(ACHIEVEMENTS.task_streak_7.xp, 'streak');
-      }
-
-      setUserStats(updatedStats);
-      await saveUserStats(updatedStats);
+      await updateTaskStreak();
+      await updateDailyStreak();
+    } else if (type === 'habit') {
+      await updateHabitStreak(habitId);
+      await updateDailyStreak();
+    } else if (type === 'daily') {
+      await updateDailyStreak();
     }
   };
 
@@ -465,6 +830,7 @@ export function GamificationProvider({ children }) {
       setUserStats(updatedStats);
       await saveUserStats(updatedStats);
       await awardXP(15, 'habit_completion');
+      await updateStreaks('habit', habit?.id);
     }
   };
 
@@ -488,6 +854,7 @@ export function GamificationProvider({ children }) {
     setUserStats(updatedStats);
     await saveUserStats(updatedStats);
     await awardXP(25, 'pomodoro');
+    await updateStreaks('daily');
   };
 
   const value = {
@@ -507,6 +874,13 @@ export function GamificationProvider({ children }) {
     trackHabitCompletion,
     trackPomodoroSession,
     updateStreaks,
+    updateDailyStreak,
+    updateTaskStreak,
+    updateHabitStreak,
+    canUseWeeklyPass,
+    useWeeklyPass,
+    canUndoWeeklyPass,
+    undoWeeklyPass,
     achievements: ACHIEVEMENTS,
     calculateLevel,
     xpForNextLevel

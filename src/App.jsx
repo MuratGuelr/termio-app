@@ -5,6 +5,7 @@ import { db } from './config/firebase';
 import Login from './components/Login';
 import Header from './components/Header';
 import SettingsModal from './components/modals/SettingsModal';
+import AchievementsModal from './components/modals/AchievementsModal.jsx';
 import MobileEditButton from './components/MobileEditButton';
 import MobileNav from './components/MobileNav';
 import MainContent from './components/MainContent';
@@ -17,6 +18,7 @@ import OnboardingMobile from './components/OnboardingMobile';
 import EnhancedPomodoroTimer from './components/EnhancedPomodoroTimer';
 import DecorStudio from './components/decor/DecorStudio.jsx';
 import { GamificationProvider } from './contexts/GamificationContext';
+import { useToast } from './components/notifications/ToastContainer.jsx';
 import { Routes, Route } from 'react-router-dom';
 import './styles/variables.css';
 import './styles/base.css';
@@ -38,6 +40,8 @@ function App() {
   const [tutorialLoaded, setTutorialLoaded] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const { addToast, ToastContainer } = useToast();
 
   useEffect(() => {
     const saved = localStorage.getItem('theme') || 'light';
@@ -47,6 +51,39 @@ function App() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // Listen gamification events to show toasts
+  useEffect(() => {
+    const onAchievements = (e) => {
+      const items = e.detail?.ids || [];
+      items.forEach(a => addToast(`${a.icon || '🏅'} ${a.name} açıldı! +${a.xp} XP`, 'success'));
+    };
+    const onStreak = (e) => {
+      const { type, current } = e.detail || {};
+      if (!type || !current) return;
+      const map = { daily: 'Günlük seri', task: 'Görev serisi', habit: 'Alışkanlık serisi' };
+      addToast(`🔥 ${map[type] || 'Seri'} x${current}`, 'info');
+    };
+    const onStreakReset = (e) => {
+      const { type, previous } = e.detail || {};
+      const map = { daily: 'Günlük seri', task: 'Görev serisi', habit: 'Alışkanlık serisi' };
+      if (previous) addToast(`⚠️ ${map[type] || 'Seri'} bozuldu (x${previous})`, 'warning');
+    };
+    const onRankUp = (e) => {
+      const { to } = e.detail || {};
+      if (to?.name) addToast(`${to.icon || '🏆'} Yeni rütbe: ${to.name}!`, 'success');
+    };
+    window.addEventListener('achievements_unlocked', onAchievements);
+    window.addEventListener('streak_updated', onStreak);
+    window.addEventListener('streak_reset', onStreakReset);
+    window.addEventListener('rank_up', onRankUp);
+    return () => {
+      window.removeEventListener('achievements_unlocked', onAchievements);
+      window.removeEventListener('streak_updated', onStreak);
+      window.removeEventListener('streak_reset', onStreakReset);
+      window.removeEventListener('rank_up', onRankUp);
+    };
+  }, [addToast]);
 
   // Load per-user tutorial status
   useEffect(() => {
@@ -138,6 +175,7 @@ function App() {
                 isEditing={isEditing}
                 onToggleEdit={() => setIsEditing(!isEditing)}
                 onOpenSettings={openSettings}
+                onOpenAchievements={() => setAchievementsOpen(true)}
               />
               <MobileEditButton
                 isEditing={isEditing}
@@ -152,6 +190,7 @@ function App() {
               />
               <HistoryModal open={historyOpen} onClose={closeHistory} />
               <GoalModal open={goalModalOpen} onClose={closeGoalModal} />
+              <AchievementsModal open={achievementsOpen} onClose={() => setAchievementsOpen(false)} />
               <SettingsModal
                 open={settingsOpen}
                 onClose={closeSettings}
@@ -167,6 +206,7 @@ function App() {
               />
               <CelebrationOverlay show={showCelebration} />
               <EnhancedPomodoroTimer />
+              <ToastContainer />
               {!tutorialCompleted && (
                 // TEMP: force mobile tutorial for all screen sizes to validate phone flow
                 <OnboardingMobile onComplete={() => setTutorialCompleted(true)} />
