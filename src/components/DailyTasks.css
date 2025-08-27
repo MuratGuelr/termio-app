@@ -48,6 +48,21 @@
   position: relative;
 }
 
+/* Time Range Inputs */
+.time-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.time-separator {
+  color: var(--gray-600);
+  font-weight: 600;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
 .task-item:hover {
   background: var(--gray-100);
   transform: translateY(-2px);

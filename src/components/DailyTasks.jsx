@@ -5,18 +5,18 @@ import { useAuth } from '../contexts/AuthContext';
 import './DailyTasks.css';
 
 const defaultTasks = [
-  { time: '07:30', activity: 'Uyanış ve Sabah Rutini', id: 'wake-up' },
-  { time: '08:00', activity: 'Sabah Hareketi (30dk Yürüyüş)', id: 'morning-exercise' },
-  { time: '08:30', activity: 'Kahvaltı ve Güne Hazırlık', id: 'breakfast' },
-  { time: '09:00', activity: 'ODAKLI YOUTUBE İŞLERİ', id: 'youtube-work' },
-  { time: '13:15', activity: 'Öğle Yemeği ve Mola', id: 'lunch' },
-  { time: '14:15', activity: 'ESNEK ZAMAN ( İşleri Hallet )', id: 'flexible-time' },
-  { time: '17:15', activity: 'İngilizce Konuşma Pratiği', id: 'english-practice' },
-  { time: '17:45', activity: 'Kişisel Zaman ve Akşam Yemeği Hazırlığı', id: 'personal-time' },
-  { time: '19:00', activity: 'Akşam Yemeği', id: 'dinner' },
-  { time: '20:00', activity: 'SOSYAL ZAMAN / HOBİLER', id: 'social-time' },
-  { time: '23:30', activity: 'Akşam Rutini (Okuma, Şınav-Mekik)', id: 'evening-routine' },
-  { time: '00:30', activity: 'Uyku', id: 'sleep' }
+  { startTime: '07:30', endTime: '08:00', activity: 'Uyanış ve Sabah Rutini', id: 'wake-up' },
+  { startTime: '08:00', endTime: '08:30', activity: 'Sabah Hareketi (30dk Yürüyüş)', id: 'morning-exercise' },
+  { startTime: '08:30', endTime: '09:00', activity: 'Kahvaltı ve Güne Hazırlık', id: 'breakfast' },
+  { startTime: '09:00', endTime: '13:15', activity: 'ODAKLI YOUTUBE İŞLERİ', id: 'youtube-work' },
+  { startTime: '13:15', endTime: '14:15', activity: 'Öğle Yemeği ve Mola', id: 'lunch' },
+  { startTime: '14:15', endTime: '17:15', activity: 'ESNEK ZAMAN ( İşleri Hallet )', id: 'flexible-time' },
+  { startTime: '17:15', endTime: '17:45', activity: 'İngilizce Konuşma Pratiği', id: 'english-practice' },
+  { startTime: '17:45', endTime: '19:00', activity: 'Kişisel Zaman ve Akşam Yemeği Hazırlığı', id: 'personal-time' },
+  { startTime: '19:00', endTime: '20:00', activity: 'Akşam Yemeği', id: 'dinner' },
+  { startTime: '20:00', endTime: '23:30', activity: 'SOSYAL ZAMAN / HOBİLER', id: 'social-time' },
+  { startTime: '23:30', endTime: '00:30', activity: 'Akşam Rutini (Okuma, Şınav-Mekik)', id: 'evening-routine' },
+  { startTime: '00:30', endTime: '07:30', activity: 'Uyku', id: 'sleep' }
 ];
 
 // Helpers - Turkish week starts from Monday
@@ -121,7 +121,8 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
   const addTask = () => {
     const newTask = {
       id: `task-${Date.now()}`,
-      time: '09:00',
+      startTime: '09:00',
+      endTime: '10:00',
       activity: 'Yeni Görev'
     };
     const dayTasks = tasksByDay[selectedDay] || [];
@@ -239,14 +240,25 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
               
               {isEditing ? (
                 <>
-                  <input
-                    type="time"
-                    className="inline-edit time-input"
-                    value={task.time}
-                    onChange={(e) => handleTaskEdit(task.id, 'time', e.target.value)}
-                    onBlur={handleTaskBlur}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <div className="time-range-inputs">
+                    <input
+                      type="time"
+                      className="inline-edit time-input"
+                      value={task.startTime || task.time || '09:00'}
+                      onChange={(e) => handleTaskEdit(task.id, 'startTime', e.target.value)}
+                      onBlur={handleTaskBlur}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="time-separator">-</span>
+                    <input
+                      type="time"
+                      className="inline-edit time-input"
+                      value={task.endTime || '10:00'}
+                      onChange={(e) => handleTaskEdit(task.id, 'endTime', e.target.value)}
+                      onBlur={handleTaskBlur}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
                   <input
                     type="text"
                     className="inline-edit task-input"
@@ -258,7 +270,9 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
                 </>
               ) : (
                 <>
-                  <div className="task-time">{task.time}</div>
+                  <div className="task-time">
+                    {task.startTime || task.time || '09:00'} - {task.endTime || '10:00'}
+                  </div>
                   <div className="task-text">{task.activity}</div>
                 </>
               )}
