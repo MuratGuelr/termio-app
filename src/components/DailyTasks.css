@@ -93,6 +93,26 @@
   cursor: not-allowed;
 }
 
+/* Day selector visuals */
+.day-selector .move-btn {
+  height: auto;
+  min-width: 38px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  background: var(--gray-200);
+}
+.day-selector .move-btn:hover {
+  background: var(--gray-300);
+}
+.day-selector .move-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.35);
+}
+.selected-day-label {
+  margin-left: 0.25rem;
+}
+
 .task-checkbox {
   width: 24px;
   height: 24px;

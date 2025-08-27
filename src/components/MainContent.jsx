@@ -8,6 +8,7 @@ import DailyHabits from './DailyHabits';
 import DailyNotes from './DailyNotes';
 import Goals from './Goals';
 import Statistics from './Statistics';
+import DaySelector from './DaySelector';
 import './MainContent.css';
 
 const quotes = [
@@ -20,10 +21,24 @@ const quotes = [
   "Her gün biraz daha iyiye doğru."
 ];
 
+// Helpers for weekday selection - Turkish week starts from Monday
+const dayKeys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const getTodayWeekdayKey = () => {
+  const jsDay = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const turkishDayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to Turkish week (0=Monday, 6=Sunday)
+  return dayKeys[turkishDayIndex];
+};
+const getTodayDayKey = () => {
+  const jsDay = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const turkishDayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to Turkish week (0=Monday, 6=Sunday)
+  return dayKeys[turkishDayIndex];
+};
+
 export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTriggerCelebration, isEditing }) {
   const { user } = useAuth();
   const { trackHabitCompletion } = useGamification();
   const [dailyQuote, setDailyQuote] = useState(quotes[0]);
+  const [selectedDay, setSelectedDay] = useState(getTodayDayKey());
   const [currentData, setCurrentData] = useState({
     completedTasks: new Set(),
     completedHabits: new Set(),
@@ -115,8 +130,15 @@ export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTrigg
         getDoc(doc(db, 'users', user.uid, 'settings', 'habits')),
       ]);
       if (tSnap.exists()) {
-        const arr = Array.isArray(tSnap.data()?.tasks) ? tSnap.data().tasks : [];
-        totalTasks = arr.length || totalTasks;
+        const data = tSnap.data();
+        const weekdayKey = getTodayWeekdayKey();
+        if (data.tasksByDay && typeof data.tasksByDay === 'object') {
+          const arr = Array.isArray(data.tasksByDay?.[weekdayKey]) ? data.tasksByDay[weekdayKey] : [];
+          totalTasks = arr.length || totalTasks;
+        } else {
+          const arr = Array.isArray(data.tasks) ? data.tasks : [];
+          totalTasks = arr.length || totalTasks;
+        }
       }
       if (hSnap.exists()) {
         const arr = Array.isArray(hSnap.data()?.habits) ? hSnap.data().habits : [];
@@ -167,8 +189,25 @@ export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTrigg
     await saveDailyData(newData);
 
     // Check if all tasks completed for celebration
-    if (newCompletedTasks.size === 13) {
-      onTriggerCelebration();
+    try {
+      let totalTasks = 13;
+      const tSnap = await getDoc(doc(db, 'users', user.uid, 'settings', 'tasks'));
+      if (tSnap.exists()) {
+        const data = tSnap.data();
+        const weekdayKey = getTodayWeekdayKey();
+        if (data.tasksByDay && typeof data.tasksByDay === 'object') {
+          const arr = Array.isArray(data.tasksByDay?.[weekdayKey]) ? data.tasksByDay[weekdayKey] : [];
+          totalTasks = arr.length || totalTasks;
+        } else {
+          const arr = Array.isArray(data.tasks) ? data.tasks : [];
+          totalTasks = arr.length || totalTasks;
+        }
+      }
+      if (newCompletedTasks.size === totalTasks && totalTasks > 0) {
+        onTriggerCelebration();
+      }
+    } catch (e) {
+      // no-op if cannot determine totals
     }
   };
 
@@ -217,6 +256,12 @@ export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTrigg
         </div>
       </div>
 
+      {/* Global Day Selector */}
+      <DaySelector 
+        selectedDay={selectedDay}
+        onDayChange={setSelectedDay}
+      />
+
       {/* Dashboard */}
       <div className="dashboard-grid">
         {/* Daily Tasks */}
@@ -225,6 +270,7 @@ export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTrigg
           onToggleTask={updateTaskCompletion}
           onStartFocusMode={onStartFocusMode}
           isEditing={isEditing}
+          selectedDay={selectedDay}
         />
 
         {/* Habits */}
@@ -232,6 +278,7 @@ export default function MainContent({ onStartFocusMode, onOpenGoalModal, onTrigg
           completedHabits={currentData.completedHabits}
           onToggleHabit={updateHabitCompletion}
           isEditing={isEditing}
+          selectedDay={selectedDay}
         />
 
         {/* Notes */}

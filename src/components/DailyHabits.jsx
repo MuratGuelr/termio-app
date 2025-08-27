@@ -13,10 +13,39 @@ const defaultHabits = [
   { name: 'Düzenli Okuma', emoji: '📚', id: 'reading', streak: 0 }
 ];
 
-export default function DailyHabits({ completedHabits, onToggleHabit, isEditing }) {
+// Helpers for day-based habits - Turkish week starts from Monday
+const dayKeys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const trDayFull = {
+  monday: 'Pazartesi',
+  tuesday: 'Salı',
+  wednesday: 'Çarşamba',
+  thursday: 'Perşembe',
+  friday: 'Cuma',
+  saturday: 'Cumartesi',
+  sunday: 'Pazar',
+};
+const getTodayDayKey = () => {
+  const jsDay = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const turkishDayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to Turkish week (0=Monday, 6=Sunday)
+  return dayKeys[turkishDayIndex];
+};
+const makeWeekFrom = (arr) => {
+  const clone = (a) => (Array.isArray(a) ? a.map(h => ({ ...h })) : []);
+  return {
+    monday: clone(arr),
+    tuesday: clone(arr),
+    wednesday: clone(arr),
+    thursday: clone(arr),
+    friday: clone(arr),
+    saturday: clone(arr),
+    sunday: clone(arr),
+  };
+};
+
+export default function DailyHabits({ completedHabits, onToggleHabit, isEditing, selectedDay }) {
   const { user } = useAuth();
   const { userStats } = useGamification();
-  const [habits, setHabits] = useState(defaultHabits);
+  const [habitsByDay, setHabitsByDay] = useState(makeWeekFrom(defaultHabits));
   const [loading, setLoading] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(null);
   const [pickerKey, setPickerKey] = useState(0);
@@ -63,37 +92,49 @@ export default function DailyHabits({ completedHabits, onToggleHabit, isEditing 
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        setHabits(docSnap.data().habits || defaultHabits);
+        const data = docSnap.data();
+        if (data.habitsByDay && typeof data.habitsByDay === 'object') {
+          setHabitsByDay({ ...makeWeekFrom([]), ...data.habitsByDay });
+        } else {
+          const base = Array.isArray(data.habits) && data.habits.length > 0 ? data.habits : defaultHabits;
+          const week = makeWeekFrom(base);
+          setHabitsByDay(week);
+          await saveUserHabits(week); // migrate
+        }
       } else {
-        setHabits(defaultHabits);
-        await saveUserHabits(defaultHabits);
+        const week = makeWeekFrom(defaultHabits);
+        setHabitsByDay(week);
+        await saveUserHabits(week);
       }
     } catch (error) {
       console.error('Error loading habits:', error);
-      setHabits(defaultHabits);
+      const week = makeWeekFrom(defaultHabits);
+      setHabitsByDay(week);
     }
     setLoading(false);
   };
 
-  const saveUserHabits = async (habitsToSave) => {
+  const saveUserHabits = async (weekToSave) => {
     if (!user) return;
     try {
       const docRef = doc(db, 'users', user.uid, 'settings', 'habits');
-      await setDoc(docRef, { habits: habitsToSave });
+      await setDoc(docRef, { habitsByDay: weekToSave }, { merge: true });
     } catch (error) {
       console.error('Error saving habits:', error);
     }
   };
 
   const handleHabitEdit = (habitId, field, value) => {
-    const updatedHabits = habits.map(habit => 
+    const dayHabits = habitsByDay[selectedDay] || [];
+    const updatedHabits = dayHabits.map(habit => 
       habit.id === habitId ? { ...habit, [field]: value } : habit
     );
-    setHabits(updatedHabits);
+    const updatedWeek = { ...habitsByDay, [selectedDay]: updatedHabits };
+    setHabitsByDay(updatedWeek);
   };
 
   const handleHabitBlur = () => {
-    saveUserHabits(habits);
+    saveUserHabits(habitsByDay);
   };
 
   const addHabit = () => {
@@ -103,15 +144,19 @@ export default function DailyHabits({ completedHabits, onToggleHabit, isEditing 
       emoji: '⭐',
       streak: 0
     };
-    const updatedHabits = [...habits, newHabit];
-    setHabits(updatedHabits);
-    saveUserHabits(updatedHabits);
+    const dayHabits = habitsByDay[selectedDay] || [];
+    const updatedHabits = [...dayHabits, newHabit];
+    const updatedWeek = { ...habitsByDay, [selectedDay]: updatedHabits };
+    setHabitsByDay(updatedWeek);
+    saveUserHabits(updatedWeek);
   };
 
   const removeHabit = (habitId) => {
-    const updatedHabits = habits.filter(habit => habit.id !== habitId);
-    setHabits(updatedHabits);
-    saveUserHabits(updatedHabits);
+    const dayHabits = habitsByDay[selectedDay] || [];
+    const updatedHabits = dayHabits.filter(habit => habit.id !== habitId);
+    const updatedWeek = { ...habitsByDay, [selectedDay]: updatedHabits };
+    setHabitsByDay(updatedWeek);
+    saveUserHabits(updatedWeek);
   };
 
   const onEmojiSelectTemp = (emoji) => {
@@ -121,35 +166,42 @@ export default function DailyHabits({ completedHabits, onToggleHabit, isEditing 
   const applyEmojiChange = () => {
     if (!showEmojiPicker || !tempEmoji) { setShowEmojiPicker(null); return; }
     const habitId = showEmojiPicker;
-    const updated = habits.map(habit => habit.id === habitId ? { ...habit, emoji: tempEmoji } : habit);
-    setHabits(updated);
+    const dayHabits = habitsByDay[selectedDay] || [];
+    const updated = dayHabits.map(habit => habit.id === habitId ? { ...habit, emoji: tempEmoji } : habit);
+    const updatedWeek = { ...habitsByDay, [selectedDay]: updated };
+    setHabitsByDay(updatedWeek);
     setShowEmojiPicker(null);
     setPickerKey(prev => prev + 1);
-    saveUserHabits(updated);
+    saveUserHabits(updatedWeek);
   };
 
   const moveHabit = (habitId, direction) => {
-    const currentIndex = habits.findIndex(habit => habit.id === habitId);
+    const dayHabits = habitsByDay[selectedDay] || [];
+    const currentIndex = dayHabits.findIndex(habit => habit.id === habitId);
     const newIndex = currentIndex + direction;
     
-    if (newIndex < 0 || newIndex >= habits.length) return;
+    if (newIndex < 0 || newIndex >= dayHabits.length) return;
     
-    const updatedHabits = [...habits];
+    const updatedHabits = [...dayHabits];
     const [movedHabit] = updatedHabits.splice(currentIndex, 1);
     updatedHabits.splice(newIndex, 0, movedHabit);
     
-    setHabits(updatedHabits);
-    saveUserHabits(updatedHabits);
+    const updatedWeek = { ...habitsByDay, [selectedDay]: updatedHabits };
+    setHabitsByDay(updatedWeek);
+    saveUserHabits(updatedWeek);
   };
+  const habits = useMemo(() => habitsByDay[selectedDay] || [], [habitsByDay, selectedDay]);
+  const isTodaySelected = useMemo(() => selectedDay === getTodayDayKey(), [selectedDay]);
   const progress = useMemo(() => {
-    const completed = completedHabits.size;
-    const total = habits.length;
+    const total = habits.length || 1;
+    const completed = isTodaySelected ? completedHabits.size : 0;
     const percentage = Math.round((completed / total) * 100);
     return { completed, total, percentage };
-  }, [completedHabits, habits.length]);
+  }, [completedHabits, habits.length, isTodaySelected]);
 
   const handleHabitClick = (habitId) => {
     if (isEditing) return;
+    if (!isTodaySelected) return; // sadece bugünün listesinde tamamlanma işaretlenebilir
     const isCompleted = completedHabits.has(habitId);
     onToggleHabit(habitId, !isCompleted);
   };
@@ -163,11 +215,14 @@ export default function DailyHabits({ completedHabits, onToggleHabit, isEditing 
           <i className="fas fa-star"></i>
           Alışkanlıklar
         </h3>
-        {isEditing && (
-          <button className="add-btn" onClick={addHabit}>
-            <i className="fas fa-plus"></i>
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className="selected-day-label" style={{ color: 'var(--gray-600)', fontSize: '0.9rem' }}>{trDayFull[selectedDay]}</span>
+          {isEditing && (
+            <button className="add-btn" onClick={addHabit}>
+              <i className="fas fa-plus"></i>
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="progress-container">

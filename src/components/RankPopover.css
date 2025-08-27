@@ -1,0 +1,279 @@
+/* Rank Badge and Popover Styling */
+
+.rank-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: color-mix(in srgb, var(--white) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--white) 25%, transparent);
+  backdrop-filter: blur(8px) saturate(120%);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--gray-700);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.rank-badge:hover {
+  background: color-mix(in srgb, var(--primary) 10%, rgba(255,255,255,0.2));
+  border-color: color-mix(in srgb, var(--primary) 30%, rgba(255,255,255,0.4));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
+}
+
+.rank-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.rank-name {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rank-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 280px;
+  background: color-mix(in srgb, var(--white) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--white) 30%, transparent);
+  backdrop-filter: blur(15px) saturate(130%);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-10px);
+  transition: all 0.2s ease;
+}
+
+.rank-popover[aria-expanded="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.rank-popover::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: color-mix(in srgb, var(--white) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--white) 30%, transparent);
+  border-bottom: none;
+  border-right: none;
+  transform: translateX(-50%) rotate(45deg);
+  backdrop-filter: blur(15px) saturate(130%);
+}
+
+.rank-popover-header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--white) 20%, transparent);
+  text-align: center;
+}
+
+.rank-popover-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.rank-popover-current {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: 0.02em;
+}
+
+.rank-popover-body {
+  padding: 1rem 1.25rem;
+}
+
+.rank-next {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.rank-progress {
+  background: color-mix(in srgb, var(--gray-300) 50%, transparent);
+  border-radius: 6px;
+  height: 8px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+
+.rank-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light, #818cf8));
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+}
+
+.rank-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  margin-bottom: 0.5rem;
+}
+
+.rank-meta:last-of-type {
+  margin-bottom: 0.75rem;
+}
+
+.rank-meta span:first-child {
+  font-weight: 600;
+}
+
+.rank-meta span:last-child {
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.rank-actions {
+  text-align: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--white) 20%, transparent);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary-dark, #4338ca);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .rank-badge {
+    background: color-mix(in srgb, var(--white) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--white) 15%, transparent);
+    color: var(--gray-200);
+  }
+
+  .rank-badge:hover {
+    background: color-mix(in srgb, var(--primary) 15%, rgba(255,255,255,0.08));
+    border-color: color-mix(in srgb, var(--primary) 35%, rgba(255,255,255,0.15));
+  }
+
+  .rank-popover {
+    background: color-mix(in srgb, var(--white) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--white) 20%, transparent);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .rank-popover::before {
+    background: color-mix(in srgb, var(--white) 10%, transparent);
+    border-color: color-mix(in srgb, var(--white) 20%, transparent);
+  }
+
+  .rank-popover-header {
+    border-bottom-color: color-mix(in srgb, var(--white) 15%, transparent);
+  }
+
+  .rank-popover-title {
+    color: var(--gray-400);
+  }
+
+  .rank-popover-current {
+    color: var(--gray-100);
+  }
+
+  .rank-next {
+    color: var(--primary-light, #818cf8);
+  }
+
+  .rank-progress {
+    background: color-mix(in srgb, var(--gray-600) 50%, transparent);
+  }
+
+  .rank-meta {
+    color: var(--gray-400);
+  }
+
+  .rank-meta span:last-child {
+    color: var(--gray-300);
+  }
+
+  .rank-actions {
+    border-top-color: color-mix(in srgb, var(--white) 15%, transparent);
+  }
+
+  .btn-link {
+    color: var(--primary-light, #818cf8);
+  }
+
+  .btn-link:hover {
+    background: color-mix(in srgb, var(--primary) 15%, rgba(255,255,255,0.05));
+    color: var(--primary-light, #a5b4fc);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .rank-popover {
+    min-width: 260px;
+    left: 0;
+    right: 0;
+    margin: 0 1rem;
+    transform: translateX(0);
+  }
+
+  .rank-popover[aria-expanded="true"] {
+    transform: translateX(0) translateY(0);
+  }
+
+  .rank-popover::before {
+    left: 2rem;
+    transform: translateX(0) rotate(45deg);
+  }
+
+  .rank-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .rank-popover-header {
+    padding: 0.75rem 1rem 0.5rem;
+  }
+
+  .rank-popover-body {
+    padding: 0.75rem 1rem;
+  }
+}

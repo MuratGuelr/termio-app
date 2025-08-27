@@ -19,9 +19,47 @@ const defaultTasks = [
   { time: '00:30', activity: 'Uyku', id: 'sleep' }
 ];
 
-export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusMode, isEditing }) {
+// Helpers - Turkish week starts from Monday
+const dayKeys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const trDayShort = {
+  monday: 'Pzt',
+  tuesday: 'Sal',
+  wednesday: 'Çar',
+  thursday: 'Per',
+  friday: 'Cum',
+  saturday: 'Cmt',
+  sunday: 'Pzr',
+};
+const trDayFull = {
+  monday: 'Pazartesi',
+  tuesday: 'Salı',
+  wednesday: 'Çarşamba',
+  thursday: 'Perşembe',
+  friday: 'Cuma',
+  saturday: 'Cumartesi',
+  sunday: 'Pazar',
+};
+const getTodayDayKey = () => {
+  const jsDay = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const turkishDayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to Turkish week (0=Monday, 6=Sunday)
+  return dayKeys[turkishDayIndex];
+};
+const makeWeekFrom = (arr) => {
+  const clone = (a) => (Array.isArray(a) ? a.map(t => ({ ...t })) : []);
+  return {
+    monday: clone(arr),
+    tuesday: clone(arr),
+    wednesday: clone(arr),
+    thursday: clone(arr),
+    friday: clone(arr),
+    saturday: clone(arr),
+    sunday: clone(arr),
+  };
+};
+
+export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusMode, isEditing, selectedDay }) {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState(defaultTasks);
+  const [tasksByDay, setTasksByDay] = useState(makeWeekFrom(defaultTasks));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,39 +72,50 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
     try {
       const docRef = doc(db, 'users', user.uid, 'settings', 'tasks');
       const docSnap = await getDoc(docRef);
-      
       if (docSnap.exists()) {
-        setTasks(docSnap.data().tasks || defaultTasks);
+        const data = docSnap.data();
+        if (data.tasksByDay && typeof data.tasksByDay === 'object') {
+          setTasksByDay({ ...makeWeekFrom([]), ...data.tasksByDay });
+        } else {
+          const base = Array.isArray(data.tasks) && data.tasks.length > 0 ? data.tasks : defaultTasks;
+          const week = makeWeekFrom(base);
+          setTasksByDay(week);
+          await saveUserTasks(week); // migrate
+        }
       } else {
-        setTasks(defaultTasks);
-        await saveUserTasks(defaultTasks);
+        const week = makeWeekFrom(defaultTasks);
+        setTasksByDay(week);
+        await saveUserTasks(week);
       }
     } catch (error) {
       console.error('Error loading tasks:', error);
-      setTasks(defaultTasks);
+      const week = makeWeekFrom(defaultTasks);
+      setTasksByDay(week);
     }
     setLoading(false);
   };
 
-  const saveUserTasks = async (tasksToSave) => {
+  const saveUserTasks = async (weekToSave) => {
     if (!user) return;
     try {
       const docRef = doc(db, 'users', user.uid, 'settings', 'tasks');
-      await setDoc(docRef, { tasks: tasksToSave });
+      await setDoc(docRef, { tasksByDay: weekToSave }, { merge: true });
     } catch (error) {
       console.error('Error saving tasks:', error);
     }
   };
 
   const handleTaskEdit = (taskId, field, value) => {
-    const updatedTasks = tasks.map(task => 
+    const dayTasks = tasksByDay[selectedDay] || [];
+    const updatedTasks = dayTasks.map(task => 
       task.id === taskId ? { ...task, [field]: value } : task
     );
-    setTasks(updatedTasks);
+    const updatedWeek = { ...tasksByDay, [selectedDay]: updatedTasks };
+    setTasksByDay(updatedWeek);
   };
 
   const handleTaskBlur = () => {
-    saveUserTasks(tasks);
+    saveUserTasks(tasksByDay);
   };
 
   const addTask = () => {
@@ -75,39 +124,45 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
       time: '09:00',
       activity: 'Yeni Görev'
     };
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    saveUserTasks(updatedTasks);
+    const dayTasks = tasksByDay[selectedDay] || [];
+    const updatedTasks = [...dayTasks, newTask];
+    const updatedWeek = { ...tasksByDay, [selectedDay]: updatedTasks };
+    setTasksByDay(updatedWeek);
+    saveUserTasks(updatedWeek);
   };
 
   const removeTask = (taskId) => {
-    const updatedTasks = tasks.filter(task => task.id !== taskId);
-    setTasks(updatedTasks);
-    saveUserTasks(updatedTasks);
+    const dayTasks = tasksByDay[selectedDay] || [];
+    const updatedTasks = dayTasks.filter(task => task.id !== taskId);
+    const updatedWeek = { ...tasksByDay, [selectedDay]: updatedTasks };
+    setTasksByDay(updatedWeek);
+    saveUserTasks(updatedWeek);
   };
 
   const moveTask = (taskId, direction) => {
-    const currentIndex = tasks.findIndex(task => task.id === taskId);
+    const dayTasks = tasksByDay[selectedDay] || [];
+    const currentIndex = dayTasks.findIndex(task => task.id === taskId);
     const newIndex = currentIndex + direction;
-    
-    if (newIndex < 0 || newIndex >= tasks.length) return;
-    
-    const updatedTasks = [...tasks];
+    if (newIndex < 0 || newIndex >= dayTasks.length) return;
+    const updatedTasks = [...dayTasks];
     const [movedTask] = updatedTasks.splice(currentIndex, 1);
     updatedTasks.splice(newIndex, 0, movedTask);
-    
-    setTasks(updatedTasks);
-    saveUserTasks(updatedTasks);
+    const updatedWeek = { ...tasksByDay, [selectedDay]: updatedTasks };
+    setTasksByDay(updatedWeek);
+    saveUserTasks(updatedWeek);
   };
+  const tasks = useMemo(() => tasksByDay[selectedDay] || [], [tasksByDay, selectedDay]);
+  const isTodaySelected = useMemo(() => selectedDay === getTodayDayKey(), [selectedDay]);
   const progress = useMemo(() => {
-    const completed = completedTasks.size;
-    const total = tasks.length;
+    const total = tasks.length || 1;
+    const completed = isTodaySelected ? completedTasks.size : 0;
     const percentage = Math.round((completed / total) * 100);
     return { completed, total, percentage };
-  }, [completedTasks, tasks.length]);
+  }, [completedTasks, tasks.length, isTodaySelected]);
 
   const handleTaskClick = (taskId) => {
     if (isEditing) return;
+    if (!isTodaySelected) return; // sadece bugünün listesinde tamamlanma işaretlenebilir
     const isCompleted = completedTasks.has(taskId);
     onToggleTask(taskId, !isCompleted);
   };
@@ -126,11 +181,14 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
           <i className="fas fa-tasks"></i>
           Günlük Görevler
         </h3>
-        {isEditing && (
-          <button className="add-btn" onClick={addTask}>
-            <i className="fas fa-plus"></i>
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className="selected-day-label" style={{ color: 'var(--gray-600)', fontSize: '0.9rem' }}>{trDayFull[selectedDay]}</span>
+          {isEditing && (
+            <button className="add-btn" onClick={addTask}>
+              <i className="fas fa-plus"></i>
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="progress-container">
