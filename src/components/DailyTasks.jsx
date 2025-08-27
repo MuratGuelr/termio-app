@@ -75,7 +75,23 @@ export default function DailyTasks({ completedTasks, onToggleTask, onStartFocusM
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (data.tasksByDay && typeof data.tasksByDay === 'object') {
-          setTasksByDay({ ...makeWeekFrom([]), ...data.tasksByDay });
+          // Migrate old time format to new startTime/endTime format
+          const migratedTasks = {};
+          Object.keys(data.tasksByDay).forEach(day => {
+            migratedTasks[day] = data.tasksByDay[day].map(task => {
+              if (task.time && !task.startTime) {
+                // Migrate old format: assume 1 hour duration
+                const startTime = task.time;
+                const [hours, minutes] = startTime.split(':').map(Number);
+                const endHours = (hours + 1) % 24;
+                const endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                return { ...task, startTime, endTime, time: undefined };
+              }
+              return task;
+            });
+          });
+          setTasksByDay({ ...makeWeekFrom([]), ...migratedTasks });
+          await saveUserTasks(migratedTasks); // Save migrated data
         } else {
           const base = Array.isArray(data.tasks) && data.tasks.length > 0 ? data.tasks : defaultTasks;
           const week = makeWeekFrom(base);
