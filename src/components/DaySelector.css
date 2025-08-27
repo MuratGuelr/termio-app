@@ -1,8 +1,6 @@
 /* Global Day Selector Component */
 .day-selector-global {
-  margin: 1rem 0;
-  display: flex;
-  justify-content: center;
+  margin: 1.5rem 0;
 }
 
 .day-selector-container {
@@ -14,6 +12,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.1);
   max-width: 450px;
   width: 100%;
+  margin: 0 auto;
   text-align: center;
   position: relative;
 }
@@ -167,30 +166,140 @@
 }
 
 /* Mobile responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .day-selector-global {
+    margin: 1rem 0;
+    padding: 0 1rem;
+  }
+
   .day-selector-container {
-    margin: 0 1rem;
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
-  }
-
-  .day-buttons {
-    gap: 0.2rem;
-  }
-
-  .day-btn {
-    min-width: 40px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
-  }
-
-  .selected-day-text {
-    font-size: 0.8rem;
+    margin: 0;
+    padding: 1rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--white) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--white) 35%, transparent);
+    backdrop-filter: blur(12px) saturate(130%);
   }
 
   .day-selector-header {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .day-selector-header i {
+    font-size: 1rem;
+  }
+
+  .day-buttons {
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .day-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  .day-btn {
+    min-width: 52px;
+    height: 52px;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .day-btn:active {
+    transform: scale(0.95);
+    background: color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,0.3));
+  }
+
+  .day-short {
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .today-indicator {
+    width: 5px;
+    height: 5px;
+    bottom: 6px;
+    border-radius: 50%;
+  }
+
+  .selected-day-display {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    text-align: center;
+  }
+
+  .selected-day-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .today-badge {
     font-size: 0.75rem;
-    margin-bottom: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.5rem;
+    border-radius: 8px;
+  }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+  .day-selector-global {
+    margin: 0.75rem 0;
+    padding: 0 0.75rem;
+  }
+
+  .day-selector-container {
+    padding: 0.8rem;
+  }
+
+  .day-buttons {
+    gap: 0.4rem;
+    padding: 0.6rem 0;
+  }
+
+  .day-btn {
+    min-width: 48px;
+    height: 48px;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 10px;
+  }
+
+  .day-btn:active {
+    transform: scale(0.92);
+  }
+
+  .selected-day-display {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+  }
+
+  .selected-day-text {
+    font-size: 0.85rem;
+  }
+
+  .today-indicator {
+    width: 4px;
+    height: 4px;
+    bottom: 5px;
   }
 }
 
